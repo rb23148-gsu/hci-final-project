@@ -29,7 +29,6 @@ def connect_to_database():
 # Set up default route when visiting the site including the login form
 @app.route('/')
 def index():
-
     # Create form object to be passed to the page.
     # The login will still be processed in the login route.
     form = LoginForm()
@@ -37,17 +36,29 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    connection = connect_to_database()
+    cursor = connection.cursor()
 
     # Create form object to be passed to the page.
     form = LoginForm()
-
+    
     # WTForms checks if the submitted form was sent with a POST request and fields are not empty.
     # Additional validation required. 
     if form.validate_on_submit():
         # Insert additional validation/maybe session stuff here then redirect to dashboard if all is good.
         # flash("Logging in from the login route.") <-flash messages for debugging lol
-        # 
-        return redirect(url_for('dashboard'))
+        input = form.email.data
+        password = form.password.data
+
+        query = "SELECT user_id FROM Users WHERE (email = %s OR username = %s) AND password = %s"
+        cursor.execute(query, (input, input, password,))
+        user = cursor.fetchone()
+
+        if user:
+            session['user'] = user[0]
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password')
     
     # Render main page and pass the form object to it.
     return render_template('login.html', form=form)
