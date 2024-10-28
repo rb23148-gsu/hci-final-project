@@ -2,6 +2,11 @@
 .vscode/
 .venv/
 .env
+__pycache__/
+*.pyc
+
+### Windows ###
+venv/
 
 ### Mac OS ###
 .DS_Store

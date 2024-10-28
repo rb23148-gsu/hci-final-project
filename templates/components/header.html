@@ -1,0 +1,25 @@
+<!-- This is our header component. Some nav items will eventually change based on logged in status. -->
+{% block content %}
+    <div class="row">
+        <div class="col">
+            <header>
+                <div class="container-fluid">
+                    <!--This is the navbar made responsive with Bootstrap. It collapses on smaller screen sizes
+                    to reveal a dropdown instead.-->
+                    <nav class="navbar navbar-expand-lg navbar-light border-bottom">
+                        <a class="navbar-brand" href="{{ url_for('index') }}"><h1 id="header-name">GroupLoop</h1></a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavCollapse">
+                        <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse color-white flex-row-reverse" id="navbarNavCollapse">
+                            <div class="navbar-nav">
+                                <a class="nav-item nav-link rounded-3" id="current-nav-item" href="{{ url_for('index') }}"><p class="nav-link-text">Home</p></a>
+                                <!-- <a class="nav-item nav-link rounded-3" href="#"><p class="nav-link-text">Log In</p></a> -->
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </header>
+        </div>
+    </div>
+{% endblock %}

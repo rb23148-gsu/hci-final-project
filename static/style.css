@@ -1,0 +1,20 @@
+/* Bootstrap defines lots of default styling. The styling is customizable by changing the SASS templates, or 
+   you can simply override it with some CSS as seen here. It is great for fast styling and mocking up designs. */
+
+html{
+    height:100%;
+}
+/* Setting a bg image for the body, as well as setting min and max widths for reponsiveness across a range of devices. */
+body{
+    background:url('/static/images/wave2.svg') no-repeat 0 0 fixed;
+    background-size: cover;
+    background-position: center;
+    min-width: 360px;
+    max-width: 1920px;
+    height: 100%;
+}
+
+/* Set a height to push the footer down the page a bit. */
+#index-content-container {
+    height: 80vh;
+}

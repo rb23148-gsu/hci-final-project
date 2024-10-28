@@ -1,0 +1,31 @@
+{% block content %}
+    <div class="row">
+        <div class="container col-sm-12 col-md-12 col-lg-6 d-flex flex-column  align-items-center" id="index-content-container">
+            <h2 class="text-center m-4">Login</h2>
+            <form class="w-75" action="{{ url_for('login') }}" method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    <label for="{{ form.email.id }}" class="form-label">{{ form.email.label.text }}</label>
+                    {{ form.email(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.password.id }}" class="form-label">{{ form.password.label.text }}</label>
+                    {{ form.password(class="form-control") }}
+                </div>
+                <div class="d-flex justify-content-evenly align-self-center">
+                    <div class="flex-column mb-3">
+                        {{ form.submit(class="btn btn-primary btn-lg btn-success") }}
+                    </div>
+                    <div class="flex-column">
+                        <a href="{{ url_for('create_account') }}" class="btn btn-secondary btn-lg">Create Account</a>
+                    </div>
+                </div>
+                
+            </form>
+            <div class="text-center mt-5 w-75">
+                <p>Let us take the hassle out of organizing group projects for school.</p>
+                <p>Find, create, and join groups in your classes while keeping all your most important information in one place!</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
