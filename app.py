@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import Form, BooleanField, StringField, validators
 from dotenv import load_dotenv
 from decimal import Decimal
 from datetime import datetime
-from forms import LoginForm
+from forms import LoginForm, CreateAccountForm
 import re
 import os
 import pymysql
@@ -36,36 +37,117 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    connection = connect_to_database()
-    cursor = connection.cursor()
 
     # Create form object to be passed to the page.
     form = LoginForm()
     
-    # WTForms checks if the submitted form was sent with a POST request and fields are not empty.
+    # WTForms checks some basic validation.
     # Additional validation required. 
     if form.validate_on_submit():
-        # Insert additional validation/maybe session stuff here then redirect to dashboard if all is good.
-        # flash("Logging in from the login route.") <-flash messages for debugging lol
-        input = form.email.data
-        password = form.password.data
+        # Connect to db and prepare cursor for query
+        connection = connect_to_database()
+        cursor = connection.cursor()
 
-        query = "SELECT user_id FROM Users WHERE (email = %s OR username = %s) AND password = %s"
-        cursor.execute(query, (input, input, password,))
-        user = cursor.fetchone()
-        
-        if user:
-            session['user'] = user[0]
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password')
+        try:
+            # Get input data from the form submission.
+            input = form.email.data
+            raw_password = form.password.data
+
+            # Formulate db query and get the result.
+            # This query directly checks the email or username and the stored password against the provided credentials.
+            # query = "SELECT user_id FROM Users WHERE (email = %s OR username = %s) AND password = %s"
+            # cursor.execute(query, (input, input, raw_password))
+            # user = cursor.fetchone()
+
+            # Send the user to the dashboard if the login was successful.
+            # if user:
+            #     session['user'] = user[0]
+            #     return redirect(url_for('dashboard'))
+            # else:
+            #     flash('Invalid email or password')
+
+            # Hashed password version
+            # This method grabs the password from the provided email or username and checks it later.
+            query = "SELECT user_id, password FROM Users WHERE email = %s OR username = %s"
+            cursor.execute(query, (input, input))
+            # Catches the result of the last query as a tuple.
+            user = cursor.fetchone()
+
+            # Hashed password version
+            # Start session data and send the user to the dashboard if the login was successful.
+            if user and check_password_hash(user[1], raw_password):
+                session['user'] = user[0]
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid email or password')
+
+        except Exception as e:
+            flash('An error occurred during login.')
+            print(f"Error during login: {e}")
+
+        # Close cursor and connection
+        finally:
+            cursor.close()
+            connection.close()
     
     # Render main page and pass the form object to it.
     return render_template('login.html', form=form)
 
-@app.route('/create-account', methods=['GET'])
+@app.route('/create-account', methods=['GET', 'POST'])
 def create_account():
-    return render_template('create-account.html')
+    # Create form object to pass to the page.
+    form = CreateAccountForm()
+
+    # Define these so they are in scope for the finally block to close connections.
+    connection = None
+    cursor = None
+
+    try:
+        # Connect to db and prepare cursor for query
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        # Get university names data to populate field.
+        cursor.execute("SELECT university_id, university_name FROM Universities")
+        universities = cursor.fetchall()
+        # WTForms wants a list of tuples. In this case, we are returning both id and name.
+        form.university.choices = [(uni[0], uni[1]) for uni in universities]
+
+        if form.validate_on_submit():
+            # Get input data from the form submission.
+            email = form.email.data
+            username = form.username.data
+            first_name = form.first_name.data
+            last_name = form.last_name.data
+            raw_password = form.password.data
+            university = form.university.data
+
+            # Hash the password before storing it!
+            hashed_password = generate_password_hash(raw_password)
+
+            # Insert the data into the db after validation.
+            query = "INSERT INTO Users (username, first_name, last_name, email, password, university_id) VALUES (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(query, (username, first_name, last_name, email, hashed_password, university))
+            connection.commit()
+
+            # Get the user id from the last command and use it in the session
+            session['user_id'] = cursor.lastrowid
+
+            # Redirect to the dashboard
+            return redirect(url_for('dashboard'))
+
+    except Exception as e:
+        flash("There was an error creating the account.")
+        print(f"Error creating account: {e}")
+         
+    finally:
+        # Close cursor and connection
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+    return render_template('create-account.html', form=form)
 
 @app.route('/dashboard')
 def dashboard():
