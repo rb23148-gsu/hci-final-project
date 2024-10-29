@@ -53,7 +53,7 @@ def login():
         query = "SELECT user_id FROM Users WHERE (email = %s OR username = %s) AND password = %s"
         cursor.execute(query, (input, input, password,))
         user = cursor.fetchone()
-        print('Testing')
+        
         if user:
             session['user'] = user[0]
             return redirect(url_for('dashboard'))
