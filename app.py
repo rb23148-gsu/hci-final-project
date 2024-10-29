@@ -9,9 +9,9 @@ import os
 import pymysql
 
 load_dotenv()
-SQL_USER = os.environ.get('username')
-SQL_PASSWORD = os.environ.get('sql_password')
-SQL_HOST = os.environ.get('sql_host')
+SQL_USER = os.environ.get('gl_username')
+SQL_PASSWORD = os.environ.get('gl_sql_password')
+SQL_HOST = os.environ.get('gl_sql_host')
 SQL_DB = 'grouploop_db'
 
 app = Flask(__name__)
