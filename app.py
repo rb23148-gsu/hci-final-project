@@ -33,7 +33,10 @@ def index():
     # Create form object to be passed to the page.
     # The login will still be processed in the login route.
     form = LoginForm()
-    return render_template('index.html', form=form)
+    if 'user' in session:
+        return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -54,18 +57,6 @@ def login():
             raw_password = form.password.data
 
             # Formulate db query and get the result.
-            # This query directly checks the email or username and the stored password against the provided credentials.
-            # query = "SELECT user_id FROM Users WHERE (email = %s OR username = %s) AND password = %s"
-            # cursor.execute(query, (input, input, raw_password))
-            # user = cursor.fetchone()
-
-            # Send the user to the dashboard if the login was successful.
-            # if user:
-            #     session['user'] = user[0]
-            #     return redirect(url_for('dashboard'))
-            # else:
-            #     flash('Invalid email or password')
-
             # Hashed password version
             # This method grabs the password from the provided email or username and checks it later.
             query = "SELECT user_id, password FROM Users WHERE email = %s OR username = %s"
