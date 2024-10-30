@@ -121,8 +121,12 @@ def create_account():
             cursor.execute(query, (username, first_name, last_name, email, hashed_password, university))
             connection.commit()
 
-            # Get the user id from the last command and use it in the session
-            session['user_id'] = cursor.lastrowid
+            # Get the user id so we can use it in the session
+            session_query = "SELECT user_id FROM Users WHERE email = %s"
+            cursor.execute(session_query, (email,))
+            user = cursor.fetchone()
+
+            session['user'] = user[0]
 
             # Redirect to the dashboard
             return redirect(url_for('dashboard'))
