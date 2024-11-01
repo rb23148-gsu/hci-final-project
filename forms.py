@@ -30,25 +30,8 @@ class CreateAccountForm(FlaskForm):
     classes = FieldList(FormField(ClassEntryForm), min_entries=1, max_entries=6)
     create_account = SubmitField('Create Account')
 
-# ADDING COURSE FORM - Emmanuel
-from wtforms import Form, StringField, SelectField, validators
 
-    # course_number = SelectField('Course Number', choices=[], validators=[DataRequired()])
-    # section_code = StringField('Section Code', validators=[DataRequired()])
-    subject_code = StringField('Subject Code')
-    course_number = StringField('Course Number')
-    section_code = StringField('Section Code')
 
-class CreateAccountForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired()])
-    username = StringField('Username')
-    first_name = StringField('First Name')
-    last_name = StringField('Last Name')
-    password = PasswordField('Password', validators=[DataRequired()])
-    match_password = PasswordField('Match Password', validators=[DataRequired(), EqualTo('password', message='Passwords must match.')])
-    university = SelectField('University', choices=[], validators=[DataRequired()])
-    classes = FieldList(FormField(ClassEntryForm), min_entries=1, max_entries=6)
-    create_account = SubmitField('Create Account')
 
 # ADDING COURSE FORM - Emmanuel
 
