@@ -192,7 +192,7 @@ def import_courses():
 @app.route('/dashboard')
 def dashboard():
     # For now, just render the dashboard to show we can go there after logging in
-    # We still need to get users logged in and session data going.
+    # We still need to get users logged in and session data going
     return render_template('dashboard.html')
 
 if __name__ == '__main__':
