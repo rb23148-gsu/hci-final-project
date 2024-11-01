@@ -4,7 +4,7 @@ from wtforms import Form, BooleanField, StringField, validators
 from dotenv import load_dotenv
 from decimal import Decimal
 from datetime import datetime
-from forms import LoginForm, CreateAccountForm
+from forms import LoginForm, CreateAccountForm, CourseForm
 import re
 import os
 import pymysql
