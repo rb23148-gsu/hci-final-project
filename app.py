@@ -143,7 +143,52 @@ def create_account():
             connection.close()
 
     return render_template('create-account.html', form=form)
+    
+#Emmanuel importing Courses into Database
+@app.route('/import-courses', methods=['GET', 'POST'])
+def import_courses():
+    form = CourseForm()
 
+    
+    connection = None
+    cursor = None
+
+    try:
+        # Connection
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        # Getting uni names
+        cursor.execute("SELECT university_id, university_name FROM Universities")
+        universities = cursor.fetchall()
+        form.university.choices = [(uni[0], uni[1]) for uni in universities]
+
+        if form.validate_on_submit():
+            course_name = form.course_name.data
+            course_code = form.course_code.data
+            university_id = form.university.data
+
+            # If valid, insert course data into database
+            query = "INSERT INTO Courses (course_name, course_code, university_id) VALUES (%s, %s, %s)"
+            cursor.execute(query, (course_name, course_code, university_id))
+            connection.commit()
+
+            flash("Course imported successfully.")
+            return redirect(url_for('import_courses'))
+
+    except Exception as e:
+        flash("There was an error importing the course.")
+        print(f"Error importing course: {e}")
+
+    finally:
+        # Closing cursor and connection
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+    return render_template('import_courses.html', form=form)
+    
 @app.route('/dashboard')
 def dashboard():
     # For now, just render the dashboard to show we can go there after logging in
