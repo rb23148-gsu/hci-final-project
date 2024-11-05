@@ -18,3 +18,72 @@ body{
 #index-content-container {
     height: 80vh;
 }
+
+#classes{
+    list-style-type: none;
+}
+
+#classes > li {
+    margin: 5px;
+    margin-bottom: 2em;
+
+}
+
+#section-code-entry{
+    text-transform: uppercase;
+}
+
+/* START MEDIA BREAKPOINTS */
+@media only screen and (min-width: 360px) {
+
+    .navbar-nav {
+        margin-top: 10px;
+        margin-left: 15px;
+        margin-right: 15px;
+        border-radius: 4px;
+        position: fixed top;
+    }
+
+    .navbar-nav > a {
+        padding: 10px;
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+
+    .nav-link-text {
+        margin: 0;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+
+}
+
+@media only screen and (min-width: 992px) {
+
+    .navbar-nav > a {
+        margin: 5px;
+    }
+
+    .col-lg-6 {
+        max-width: 49%;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+
+    .col-lg-6 {
+        max-width: 48%;
+    }
+}
+
+/* Background-size: cover; makes it so that the image stretches to fill the entire container. */
+@media only screen and (min-width: 1400px) {
+
+}
+
+@media only screen and (min-width: 1600px) {
+
+}
+
+/* END MEDIA BREAKPOINTS */

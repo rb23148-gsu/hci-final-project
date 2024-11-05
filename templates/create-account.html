@@ -4,7 +4,11 @@
 {% block title %}Create Account{% endblock %}
 
 {% block content %}
-    {% if form.errors %}
+<!-- Adding row and col to contain content. -->
+<div class="row">
+    <div class="col">
+        <!-- Display form errors. -->
+        {% if form.errors %}
         <div class="alert alert-danger">
             <ul>
             {% for field, errors in form.errors.items() %}
@@ -12,47 +16,47 @@
             {% endfor %}
             </ul>
         </div>
-    {% endif %}
-    <h2>Create Account</h2>
-    <form class="flex-column mx-auto w-50" action="{{ url_for('create_account') }}" method="POST">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            <label for="{{ form.email.id }}" class="form-label">{{ form.email.label.text }}</label>
-            {{ form.email(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="{{ form.username.id }}" class="form-label">{{ form.username.label.text }}</label>
-            {{ form.username(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="{{ form.first_name.id }}" class="form-label">{{ form.first_name.label.text }}</label>
-            {{ form.first_name(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="{{ form.last_name.id }}" class="form-label">{{ form.last_name.label.text }}</label>
-            {{ form.last_name(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="{{ form.password.id }}" class="form-label">{{ form.password.label.text }}</label>
-            {{ form.password(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="{{ form.match_password.id }}" class="form-label">{{ form.match_password.label.text }}</label>
-            {{ form.match_password(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="{{ form.university.id }}" class="form-label">{{ form.university.label.text }}</label>
-            {{ form.university(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="{{ form.classes.id }}" class="form-label">{{ form.classes.label.text }}</label>
-            {{ form.classes(class="form-control") }}
-        </div>
-        <div class="d-flex justify-content-evenly align-self-center">
-            <div class="flex-column mb-3">
-                {{ form.create_account(class="btn btn-primary btn-lg btn-success") }}
+        {% endif %}
+
+        <h2>Create Account</h2>
+        <form class="flex-column mx-auto w-75" action="{{ url_for('create_account') }}" method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                <label for="{{ form.email.id }}" class="form-label">{{ form.email.label.text }}</label>
+                {{ form.email(class="form-control") }}
             </div>
-        </div>
-        
-    </form>
+            <div class="mb-3">
+                <label for="{{ form.username.id }}" class="form-label">{{ form.username.label.text }}</label>
+                {{ form.username(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.first_name.id }}" class="form-label">{{ form.first_name.label.text }}</label>
+                {{ form.first_name(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.last_name.id }}" class="form-label">{{ form.last_name.label.text }}</label>
+                {{ form.last_name(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.password.id }}" class="form-label">{{ form.password.label.text }}</label>
+                {{ form.password(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.match_password.id }}" class="form-label">{{ form.match_password.label.text }}</label>
+                {{ form.match_password(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.university.id }}" class="form-label">{{ form.university.label.text }}</label>
+                {{ form.university(class="form-control", onchange="this.form.submit()") }}
+            </div>
+
+            <div class="d-flex justify-content-evenly align-self-center">
+                <div class="flex-column mb-3">
+                    {{ form.create_account(class="btn btn-primary btn-lg btn-success") }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+    
 {% endblock %}
