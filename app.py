@@ -183,7 +183,7 @@ def edit_classes():
     # Still need to add this data to the session data.
     university_id = session.get('university_id')
     # Call the form for use in the page.
-    form = ClassEntryForm()
+    form = ClassEntryForm(subject_code, course_numbers)
 
     try:
         # Connect to db
@@ -205,7 +205,7 @@ def edit_classes():
 
         classes_data = [{"subject_code": subject_code, "course_number": course_number, "section_code": section_code}
             for subject_code, course_number, section_code in existing_classes]
-        print(f'Classes data is: {classes_data}')
+        #print(f'Classes data is: {classes_data}')
 
         # Ajax is causing tons of problems with the form submission for some reason I can't figure out.
         # Trying to load all subject codes and course numbers then filter.
@@ -218,7 +218,7 @@ def edit_classes():
                 courses_dict[subject_code] = []
             courses_dict[subject_code].append(course_number)
 
-        print(f'Courses dict: {courses_dict}')
+        #print(f'Courses dict: {courses_dict}')
 
         # Old code for populating dynamic list.
         # for subject_code, course_number, section_code in existing_classes:
@@ -268,8 +268,8 @@ def edit_classes():
         
         # Do this once the form is submitted.
         if form.validate_on_submit():
-            print(f'Printing form: {form}')
-            print(f'Printing form class entries: {form.classes.entries}')
+            #print(f'Printing form: {form}')
+            #print(f'Printing form class entries: {form.classes.entries}')
 
             subject_code = form.subject_code.data
             course_number = form.course_number.data
@@ -290,12 +290,12 @@ def edit_classes():
             # See if the course exists (it should, but just in case someone decides to tamper with data or something weird happens.)
             cursor.execute("SELECT course_id FROM Courses WHERE subject_code = %s AND course_number = %s AND university_id = %s", (subject_code, course_number, university_id))
             course = cursor.fetchone()
-            print(f'Checking if course exists: {course}')
+            #print(f'Checking if course exists: {course}')
 
             # If the course doesn't exist, show an error and refresh the page.
             if not course:
                 flash("This course does not exist! Contact us with your your error.", "error")
-                print('Error block: Course does not exist.')
+                #print('Error block: Course does not exist.')
 
                 return redirect(url_for('edit_classes'))
             
@@ -305,7 +305,7 @@ def edit_classes():
             # We are relying on the user to get the section data correct.
             cursor.execute("SELECT section_id FROM Sections WHERE course_id = %s AND section_code = %s", (course_id, section_code))
             section = cursor.fetchone()
-            print('Checking if section exists.')
+            #print('Checking if section exists.')
 
             
             # If the section/course combo exists, skip putting it in the db, otherwise add it.
@@ -322,11 +322,11 @@ def edit_classes():
 
             # Next, the Enrollments table needs to be used to tie the user to the course/section combos.
             # We check first to see if the enrollment exists.
-            print('Checking if enrollment exists.')
+            #print('Checking if enrollment exists.')
 
             cursor.execute("SELECT * FROM Enrollments WHERE user_id = %s AND section_id = %s", (user_id, section_id))
             enrollment = cursor.fetchone()
-            print(f'Checking if enrollment exists: {enrollment}')
+            #print(f'Checking if enrollment exists: {enrollment}')
 
 
             # If the enrollment doesn't exist, add it.
@@ -354,54 +354,6 @@ def edit_classes():
             connection.close()
     return render_template('edit-classes.html', form=form, university_id=university_id, classes_data=classes_data, courses_dict=courses_dict)
     # return render_template('edit-classes.html', form=form, university_id=university_id, classes_data=classes_data)
-
-# Rob - The course data is in its own file. Unless we're going to manually input 
-# the courses in through the website, this isn't needed, but you could probably repurpose some of it
-# to use it with the pdf/txt file. 
-#Emmanuel importing Courses into Database
-# @app.route('/import-courses', methods=['GET', 'POST'])
-# def import_courses():
-#     form = CourseForm()
-
-    
-#     connection = None
-#     cursor = None
-
-#     try:
-#         # Connection
-#         connection = connect_to_database()
-#         cursor = connection.cursor()
-
-#         # Getting uni names
-#         # cursor.execute("SELECT university_id, university_name FROM Universities")
-#         # universities = cursor.fetchall()
-#         # form.university.choices = [(uni[0], uni[1]) for uni in universities]
-
-#         if form.validate_on_submit():
-#             course_name = form.course_name.data
-#             course_code = form.course_code.data
-#             university_id = form.university.data
-
-#             # If valid, insert course data into database
-#             query = "INSERT INTO Courses (course_name, course_code, university_id) VALUES (%s, %s, %s)"
-#             cursor.execute(query, (course_name, course_code, university_id))
-#             connection.commit()
-
-#             flash("Course imported successfully.")
-#             return redirect(url_for('import_courses'))
-
-#     except Exception as e:
-#         flash("There was an error importing the course.")
-#         print(f"Error importing course: {e}")
-
-#     finally:
-#         # Closing cursor and connection
-#         if cursor:
-#             cursor.close()
-#         if connection:
-#             connection.close()
-
-#     return render_template('import_courses.html', form=form)
     
 @app.route('/dashboard')
 def dashboard():
