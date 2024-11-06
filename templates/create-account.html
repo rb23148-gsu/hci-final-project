@@ -21,6 +21,7 @@
         <h2>Create Account</h2>
         <form class="flex-column mx-auto w-75" action="{{ url_for('create_account') }}" method="POST">
             {{ form.hidden_tag() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-3">
                 <label for="{{ form.email.id }}" class="form-label">{{ form.email.label.text }}</label>
                 {{ form.email(class="form-control") }}

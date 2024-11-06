@@ -323,7 +323,6 @@ def edit_classes():
             # Next, the Enrollments table needs to be used to tie the user to the course/section combos.
             # We check first to see if the enrollment exists.
             print('Checking if enrollment exists.')
-
             cursor.execute("SELECT * FROM Enrollments WHERE user_id = %s AND section_id = %s", (user_id, section_id))
             enrollment = cursor.fetchone()
             print(f'Checking if enrollment exists: {enrollment}')
