@@ -1,21 +1,12 @@
 # GroupLoop
 Human Computer Interaction Final Project
 
-You can do them individually, but I really recommend running: pip install -r requirements.txt
-----------------------------------------------------------------
-In your command line, direct to your local directory for the app.
-- First, run .venv\Scripts\activate
-- Second, run pip install Flask
-- Third, run pip install WTForms
-- Fourth, run pip install python-dotenv
-- Fifth, run pip install pymysql
-
-
 Windows instructions for setting up the app locally
 
 1. If you do not have .venv installed, first create the virtual environment locally by running:  python -m venv venv
 
 2. After this is done, you need to activate the virtual environment. You can do this with the command: venv\Scripts\activate
+    2a. If you are on macOS, after step one you will instead use the command source venv/bin/activate
 
 You will know that it is activated because you'll see the (venv) tag show up in your terminal. Virtual environments are a way to install and manage dependencies on a per-project basis instead of installing the modules globally.
 
