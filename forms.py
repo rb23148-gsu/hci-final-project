@@ -17,8 +17,8 @@ class LoginForm(FlaskForm):
 class ClassEntryForm(FlaskForm):
     # Use this when we have a table set up with all subject codes, course numbers, and course names.
     # Variable names correspond to columns in Courses table.
-    subject_code = SelectField('Subject Code', choices=[], validators=[DataRequired()])
-    course_number = SelectField('Course Number', choices=[], validators=[DataRequired()])
+    subject_code = SelectField('Subject Code', choices=[], validate_choice=False, validators=[DataRequired()])
+    course_number = SelectField('Course Number', choices=[], validate_choice=False, validators=[DataRequired()])
     section_code = StringField('Section Code', validators=[DataRequired()])
 
 # Form to create the account on create-account page.

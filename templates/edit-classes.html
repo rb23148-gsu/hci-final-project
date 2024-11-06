@@ -22,7 +22,7 @@
                     <li>
                         <strong>Class {{ loop.index }}:</strong>
                         {{ class_entry.subject_code }} - 
-                        {{ class_entry.course_number }} - 
+                        {{ class_entry.course_number }} {{ class_entry.subject_name }} - 
                         Section: {{ class_entry.section_code }}
                     </li>
                 {% endfor %}
@@ -83,16 +83,16 @@
 
         // Function to load course numbers via AJAX
         function loadCourseNumbers(subjectCode) {
-            fetch(`/edit-classes?action=load_course_numbers&university_id=${universityId}&subject_code=${subjectCode}`)
-                .then(response => response.json())
-                .then(data => {
-                    const courseNumberSelect = document.querySelector('#course_number');
-                    courseNumberSelect.innerHTML = '<option value="">Select Course Number</option>';
-                    data.course_numbers.forEach(num => {
-                        courseNumberSelect.innerHTML += `<option value="${num}">${num}</option>`;
-                    });
-                })
-                .catch(error => console.error('Error loading course numbers:', error));
+        fetch(`/edit-classes?action=load_course_numbers&university_id=${universityId}&subject_code=${subjectCode}`)
+            .then(response => response.json())
+            .then(data => {
+                const courseNumberSelect = document.querySelector('#course_number');
+                courseNumberSelect.innerHTML = '<option value="">Select Course Number</option>';
+                data.course_data.forEach(course => {
+                    courseNumberSelect.innerHTML += `<option value="${course.course_number}">${course.course_number} - ${course.subject_name}</option>`;
+                });
+            })
+            .catch(error => console.error('Error loading course numbers:', error));
         }
     });
 </script>
