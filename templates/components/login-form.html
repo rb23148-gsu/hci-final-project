@@ -4,6 +4,7 @@
             <h2 class="text-center m-4">Login</h2>
             <form class="w-75" action="{{ url_for('login') }}" method="POST">
                 {{ form.hidden_tag() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="mb-3">
                     <label for="{{ form.email.id }}" class="form-label">{{ form.email.label.text }}</label>
                     {{ form.email(class="form-control") }}
