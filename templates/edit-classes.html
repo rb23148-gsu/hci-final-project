@@ -5,83 +5,74 @@
 {% block content %}
 <div class="row">
     <div class="col col-sm-12 col-md-12 col-lg-6 mx-auto text-align-center mt-5">
-        <!-- Show any form errors. -->
         {% if form.errors %}
             <div class="alert alert-danger">
                 <ul>
-                {% for field, errors in form.errors.items() %}
-                    <li>{{ field }}: {{ errors[0] }}</li>
-                {% endfor %}
+                    {% for field, errors in form.errors.items() %}
+                        <li>{{ field }}: {{ errors[0] }}</li>
+                    {% endfor %}
                 </ul>
             </div>
         {% endif %}
-    <form>
+
+        <h2>Current Enrollments</h2>
+        {% if classes_data %}
+            <ul>
+                {% for class_entry in classes_data %}
+                    <li>
+                        <strong>Class {{ loop.index }}:</strong>
+                        {{ class_entry.subject_code }} - 
+                        {{ class_entry.course_number }} - 
+                        Section: {{ class_entry.section_code }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>You have no current enrollments. Please add classes below.</p>
+        {% endif %}
+
         <h2>Add Your Classes</h2>
-        <p>You can add a max of 6 classes.</p>
-        <!-- We are going to create a dynamic form control for each class in the list allowing for other classes to be added. -->
-        <ul class="form-control" id="classes">
-
-            <!-- This Jinja2 code allows creating the dynamic list. -->
-            {% for class in form.classes %}
-            <li>
-                <label for="{{ class.id }}">Class {{ loop.index }}</label> 
-                <table id="{{ class.id }}">
-                    <tbody>
-                        <tr>
-                            <th><label for="{{ class.subject_code.id }}">{{ class.subject_code.label.text }}</label></th>
-                            <td>
-                                {{ class.subject_code(class="form-control subject-code", id="classes-0-subject_code", data_index="0") }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th><label for="{{ class.course_number.id }}">{{ class.course_number.label.text }}</label></th>
-                            <td>{{ class.course_number(class="form-control", id="classes-0-course_number") }}</td>
-                        </tr>
-                        <tr>
-                            <th><label for="{{ class.section_code.id }}">{{ class.section_code.label.text }}</label></th>
-                            <td>{{ class.section_code(class="form-control", id="section-code-entry") }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button type="button" class="btn btn-danger remove-class">Remove Class</button>
-            </li>
-            {% endfor %}
-            
-        </ul>
-        <!-- Add a class button. -->
-        <button type="button" class="btn btn-success" id="add-class">Add Another Class</button>
-
-        <!-- Add All Classes To Account button. -->
-        <div class="d-flex justify-content-evenly align-self-center mt-5">
-            <div class="flex-column mb-3">
-                {{ form.add_classes(class="btn btn-primary btn-lg btn-success") }}
-            </div>
-        </div>
+        <p>You can add up to 6 classes.</p>
         
-    </form>
+        <form method="POST" action="/edit-classes">
+            {{ form.hidden_tag() }}
+
+            <div class="form-control">
+                <label for="subject_code">Subject Code</label>
+                {{ form.subject_code(class="form-control") }}
+        
+                <label for="course_number">Course Number</label>
+                {{ form.course_number(class="form-control") }}
+        
+                <label for="section_code">Section Code</label>
+                {{ form.section_code(class="form-control") }}
+            </div>
+        
+            <button type="submit" class="btn btn-primary mt-3">Submit Class</button>
+        </form>
     </div>
 </div>
 
 <script>
-    // We are getting the university id from the create-account page and using it to update data asynchronously.
-    // Don't worry about the 6 errors on this page. The IDE is mad about the Jinja2 snippet.
     document.addEventListener('DOMContentLoaded', function() {
-        const universityId = {{ university_id | tojson }};
+        const universityId = {{ university_id | tojson }};  // Ensure university_id is passed correctly
         console.log("University ID loaded:", universityId);
 
-        // Get the subject codes or throw an error.
-        function loadSubjectCodes(classIndex) {
-            console.log("Loading subject codes for class index:", classIndex);
-            // Call the edit classes route and pass the action and relevant data to get info from the db.
+        // Load subject codes for the first class entry
+        loadSubjectCodes();
+
+        // Handle subject code changes to load course numbers
+        document.querySelector('#subject_code').addEventListener('change', function(event) {
+            const subjectCode = event.target.value;
+            loadCourseNumbers(subjectCode);
+        });
+
+        // Function to load subject codes via AJAX
+        function loadSubjectCodes() {
             fetch(`/edit-classes?action=load_subject_codes&university_id=${universityId}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Failed to load subject codes');
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    // Populate the dropdowns with the subject codes as options for the university in question.
-                    console.log("Subject codes received:", data.subject_codes);
-                    const subjectCodeSelect = document.querySelector(`#classes-${classIndex}-subject_code`);
+                    const subjectCodeSelect = document.querySelector('#subject_code');
                     subjectCodeSelect.innerHTML = '<option value="">Select Subject Code</option>';
                     data.subject_codes.forEach(code => {
                         subjectCodeSelect.innerHTML += `<option value="${code}">${code}</option>`;
@@ -90,108 +81,19 @@
                 .catch(error => console.error('Error loading subject codes:', error));
         }
 
-        // Load subject codes for the first hardcoded form on page load
-        loadSubjectCodes(0);
-
-        // Set up Remove button functionality for the first hardcoded entry
-        const firstRemoveButton = document.querySelector('#classes li .remove-class');
-        if (firstRemoveButton) {
-            firstRemoveButton.addEventListener('click', function() {
-                firstRemoveButton.closest('li').remove();
-            });
+        // Function to load course numbers via AJAX
+        function loadCourseNumbers(subjectCode) {
+            fetch(`/edit-classes?action=load_course_numbers&university_id=${universityId}&subject_code=${subjectCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    const courseNumberSelect = document.querySelector('#course_number');
+                    courseNumberSelect.innerHTML = '<option value="">Select Course Number</option>';
+                    data.course_numbers.forEach(num => {
+                        courseNumberSelect.innerHTML += `<option value="${num}">${num}</option>`;
+                    });
+                })
+                .catch(error => console.error('Error loading course numbers:', error));
         }
-
-        document.addEventListener('change', function(event) {
-            // Do stuff when the subject code is selected or changed.
-            if (event.target.classList.contains('subject-code')) {
-                // Get the index of the class form that was changed and the new value of the subject code.
-                const classIndex = event.target.dataset.index;
-                const subjectCode = event.target.value;
-                // Debug log
-                console.log("Subject code changed for class index:", classIndex, "Subject Code:", subjectCode);
-                // Call the edit-classes route with the action, university id, and subject code to get only existing courses that match all.
-                fetch(`/edit-classes?action=load_course_numbers&university_id=${universityId}&subject_code=${subjectCode}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Failed to load course numbers');
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Get the matching course numbers and populate the specific class form as options.
-                        console.log("Course numbers received:", data.course_numbers);
-                        const courseNumberSelect = document.querySelector(`#classes-${classIndex}-course_number`);
-                        courseNumberSelect.innerHTML = '<option value="">Select Course Number</option>';
-                        data.course_numbers.forEach(num => {
-                            courseNumberSelect.innerHTML += `<option value="${num}">${num}</option>`;
-                        });
-                    })
-                    .catch(error => console.error('Error loading course numbers:', error));
-            }
-        });
-
-        // Add the ability to add up to 6 classes in the form with a button.
-        document.getElementById('add-class').addEventListener('click', function() {
-            // Get existing class entry forms
-            const classEntries = document.getElementById('classes');
-            // Count them and add 1 since it's zero indexed.
-            const currentEntries = classEntries.children.length + 1;
-            // Get the add class button.
-            const addClassButton = document.getElementById('add-class');
-            // Allow up to 6 entries.
-            if (currentEntries <= 6) {
-                // Create new entries as a list item in the ul.
-                const newClassEntry = document.createElement('li');
-                // Add HTML mimicking the hardcoded layout, but in HTML.
-                newClassEntry.innerHTML = `
-                    <label for="classes-${currentEntries}">Class ${currentEntries}</label>
-                    <table id="classes-${currentEntries}">
-                        <tbody>
-                            <tr>
-                                <th><label for="classes-${currentEntries}-subject_code">Subject Code</label></th>
-                                <td>
-                                    <select id="classes-${currentEntries}-subject_code" name="classes-${currentEntries}.subject_code" class="form-control subject-code" data-index="${currentEntries}">
-                                        <option value="">Select Subject Code</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th><label for="classes-${currentEntries}-course_number">Course Number</label></th>
-                                <td>
-                                    <select id="classes-${currentEntries}-course_number" name="classes-${currentEntries}.course_number" class="form-control">
-                                        <option value="">Select Course Number</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th><label for="classes-${currentEntries}-section_code">Section Code</label></th>
-                                <td>
-                                    <input type="text" name="classes-${currentEntries}.section_code" class="form-control">
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-                // Allow the ability to remove classes with a button click.
-                const removeButton = document.createElement('button');
-                removeButton.type = "button";
-                removeButton.className = "btn btn-danger remove-class";
-                removeButton.textContent = "Remove Class";
-                removeButton.addEventListener('click', () => {
-                    newClassEntry.remove();
-                });
-                // Append the remove button and the new class entry form.
-                newClassEntry.appendChild(removeButton);
-                classEntries.appendChild(newClassEntry);
-
-                // Call to load the subject codes into the form.
-                loadSubjectCodes(currentEntries);
-
-                // If the number of classes is 6, hide the add class button.
-                if (currentEntries === 6) {
-                addClassButton.style.display = 'none';
-            }
-            }
-        });
     });
 </script>
-
 {% endblock %}
