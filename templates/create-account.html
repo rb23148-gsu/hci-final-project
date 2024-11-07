@@ -24,11 +24,12 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-3">
                 <label for="{{ form.email.id }}" class="form-label">{{ form.email.label.text }}</label>
-                {{ form.email(class="form-control") }}
+                {{ form.email(class="form-control", id = "email") }}
             </div>
             <div class="mb-3">
                 <label for="{{ form.username.id }}" class="form-label">{{ form.username.label.text }}</label>
-                {{ form.username(class="form-control") }}
+                {{ form.username(class="form-control", id = "username") }}
+                <small class="form-text text-muted">You can change your username if you prefer.</small>
             </div>
             <div class="mb-3">
                 <label for="{{ form.first_name.id }}" class="form-label">{{ form.first_name.label.text }}</label>
@@ -59,5 +60,28 @@
         </form>
     </div>
 </div>
-    
+
+<script>
+    document.getElementById("email").addEventListener("blur", function() {
+        const emailValue = this.value;
+
+        // Only send AJAX request if email contains '@' and is not empty
+        if (emailValue.includes('@') && emailValue.trim() !== '') {
+            fetch("{{ url_for('suggest_username') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": "{{ csrf_token() }}"
+                },
+                body: "email=" + encodeURIComponent(emailValue)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Populate the username field with the suggested username
+                document.getElementById("username").value = data.username;
+            });
+        }
+    });
+</script>
+
 {% endblock %}

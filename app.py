@@ -138,6 +138,18 @@ def create_account():
             # Hash the password before storing it!
             hashed_password = generate_password_hash(raw_password)
 
+            query = "SELECT COUNT(*) FROM Users WHERE username = %s"
+            cursor.execute(query, (username,))
+            if cursor.fetchone()[0] > 0:
+                flash("The username is already taken. Please choose a different one.")
+                return render_template('create-account.html', form=form)
+            
+            query = "SELECT COUNT(*) FROM Users WHERE email = %s"
+            cursor.execute(query, (email,))
+            if cursor.fetchone()[0] > 0:
+                flash("The email is already taken. Please choose a different one or login.")
+                return render_template('create-account.html', form=form)
+
             # Insert the data into the db after validation.
             query = "INSERT INTO Users (username, first_name, last_name, email, password, university_id) VALUES (%s, %s, %s, %s, %s, %s)"
             cursor.execute(query, (username, first_name, last_name, email, hashed_password, university))
@@ -167,6 +179,14 @@ def create_account():
 
     return render_template('create-account.html', form=form)
 
+
+@app.route('/suggest-username', methods=['POST'])
+def suggest_username():
+    email = request.form.get('email', '')
+    if email and '@' in email:
+        username = email.split('@')[0]
+        return jsonify({'username': username})
+    return jsonify({'username': ''})
 
 @app.route('/edit-classes', methods=['GET', 'POST'])
 def edit_classes():
