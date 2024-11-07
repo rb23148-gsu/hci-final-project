@@ -209,12 +209,17 @@ def edit_classes():
         cursor = connection.cursor()
 
         # Check the db for the user's existing course/section combos so we can populate the edit-classes form.
-        cursor.execute("""SELECT c.subject_code, c.course_number, c.subject_name, s.section_code FROM Sections s JOIN Courses c ON s.course_id = c.course_id JOIN Enrollments e ON s.section_id = e.section_id WHERE e.user_id = %s""", (user_id,))
+        cursor.execute("""SELECT c.subject_code, c.course_number, c.subject_name, s.section_code, e.enrollment_id    FROM Sections s    JOIN Courses c ON s.course_id = c.course_id   JOIN Enrollments e ON s.section_id = e.section_id     WHERE e.user_id = %s""", (user_id,))
         existing_classes = cursor.fetchall()
+        
+      
+   
+
+        
 
         # If classes exist, start with a blank slate then populate them with db info.
-        classes_data = [{"subject_code": subject_code, "course_number": course_number, "subject_name": subject_name, "section_code": section_code}
-            for subject_code, course_number, subject_name, section_code in existing_classes]
+        classes_data = [{"subject_code": subject_code, "course_number": course_number, "subject_name": subject_name, "section_code": section_code, "enrollment_id": enrollment_id}
+                for subject_code, course_number, subject_name, section_code, enrollment_id in existing_classes]
 
         cursor.execute("SELECT DISTINCT subject_code, course_number FROM Courses WHERE university_id = %s", (university_id,))
         all_courses = cursor.fetchall()
@@ -314,6 +319,39 @@ def edit_classes():
         if connection:
             connection.close()
     return render_template('edit-classes.html', form=form, university_id=university_id, classes_data=classes_data, courses_dict=courses_dict)
+
+@app.route('/delete-course/<int:enrollment_id>', methods=['POST'])
+def delete_course(enrollment_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    connection = connect_to_database()
+    cursor = connection.cursor()
+    try:
+        # Deleting the student's enrollments records
+        cursor.execute("DELETE FROM Enrollments WHERE enrollment_id = %s", (enrollment_id,))
+        connection.commit()
+
+        # Checking to see if any students remain  ina section
+        cursor.execute("SELECT COUNT(*) FROM Enrollments WHERE section_id = (SELECT section_id FROM Enrollments WHERE enrollment_id = %s)", (enrollment_id,))
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("DELETE FROM Sections WHERE section_id = (SELECT section_id FROM Enrollments WHERE enrollment_id = %s)", (enrollment_id,))
+            connection.commit()
+
+        flash("Course successfully deleted!")
+    except Exception as e:
+        connection.rollback()
+        flash("There was an error deleting the course.")
+        print(f"Error deleting course: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+    return redirect(url_for('edit-classes.html'))
+
+
 
 @app.route('/dashboard')
 def dashboard():
