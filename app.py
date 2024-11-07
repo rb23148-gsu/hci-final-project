@@ -306,7 +306,7 @@ def edit_classes():
             flash("Classes successfully updated!")
             print("Classes successfully updated!")
 
-            return redirect(url_for('dashboard'))
+            # return redirect(url_for('dashboard'))
 
     except Exception as e:
         flash("There was an error editing classes.")
@@ -328,28 +328,38 @@ def delete_course(enrollment_id):
     connection = connect_to_database()
     cursor = connection.cursor()
     try:
+        # Find section id first
+        cursor.execute("SELECT section_id FROM Enrollments WHERE enrollment_id = %s", (enrollment_id,))
+        section_row = cursor.fetchone()
+        section_id = section_row[0]
+
         # Deleting the student's enrollments records
         cursor.execute("DELETE FROM Enrollments WHERE enrollment_id = %s", (enrollment_id,))
         connection.commit()
 
-        # Checking to see if any students remain  ina section
-        cursor.execute("SELECT COUNT(*) FROM Enrollments WHERE section_id = (SELECT section_id FROM Enrollments WHERE enrollment_id = %s)", (enrollment_id,))
-        if cursor.fetchone()[0] == 0:
-            cursor.execute("DELETE FROM Sections WHERE section_id = (SELECT section_id FROM Enrollments WHERE enrollment_id = %s)", (enrollment_id,))
+        # Checking to see if any students remain in a section. If not, delete the section.
+        cursor.execute("SELECT COUNT(*) FROM Enrollments WHERE section_id = %s", (section_id,))
+        enrollment_count_query = cursor.fetchone()
+        enrollment_count = enrollment_count_query[0]
+
+        if enrollment_count == 0:
+            cursor.execute("DELETE FROM Sections WHERE section_id = %s", (section_id,))
             connection.commit()
 
         flash("Course successfully deleted!")
+
     except Exception as e:
         connection.rollback()
         flash("There was an error deleting the course.")
         print(f"Error deleting course: {e}")
+        connection.rollback()
     finally:
         if cursor:
             cursor.close()
         if connection:
             connection.close()
 
-    return redirect(url_for('edit-classes.html'))
+    return redirect(url_for('edit_classes'))
 
 
 
