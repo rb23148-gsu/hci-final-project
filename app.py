@@ -247,6 +247,14 @@ def edit_classes():
             course_data = [{'course_number': course[0], 'subject_name': course[1]} for course in courses]
 
             return jsonify(course_data=course_data)
+        
+        query = ("Select Count(*) from Enrollments where user_id = %s")
+        cursor.execute(query, (user_id,))
+        num_classes = cursor.fetchone()[0]
+        if num_classes >= 6:
+            flash("You cannot have more than 6 classes!", "error")
+            disable_submit = True
+            return render_template('edit-classes.html', form=form, classes_data=classes_data, university_id=university_id, disable_submit=disable_submit)
 
         if form.validate_on_submit():
             subject_code = form.subject_code.data

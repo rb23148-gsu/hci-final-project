@@ -48,7 +48,11 @@
                 {{ form.section_code(class="form-control") }}
             </div>
         
-            <button type="submit" class="btn btn-primary mt-3">Submit Class</button>
+            <button type="submit" class="btn btn-primary btn-lg btn-success" 
+            {% if disable_submit %} 
+                disabled 
+            {% endif %}>
+            Submit Class</button>
         </form>
     </div>
 </div>
