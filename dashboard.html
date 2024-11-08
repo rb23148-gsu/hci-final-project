@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <p class="mt-5 text-center">This is my dashboard. Всем привет</p>
+    <h1>Dashboard</h1>
+    <div class="row">
+        <div class="col">
+            <h2>My Groups</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <h2>Other Groups</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <!--This still needs styling but I needed a way to get to the page-->
+            <h2>
+                <a href="{{ url_for('creategroup') }}">Create Group</a>
+            </h2>
+        </div>
+    </div>
+{% endblock %}
