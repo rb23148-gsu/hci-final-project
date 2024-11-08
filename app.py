@@ -373,9 +373,9 @@ def logout():
         return redirect(url_for('login'))
 
 
-@app.route('/creategroup', methods=['GET'])
-def creategroup():
-    return render_template('creategroup.html')
+@app.route('/create-group', methods=['GET'])
+def create_group():
+    return render_template('create-group.html')
 
 
 if __name__ == '__main__':
