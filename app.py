@@ -188,6 +188,7 @@ def suggest_username():
         return jsonify({'username': username})
     return jsonify({'username': ''})
 
+
 @app.route('/edit-classes', methods=['GET', 'POST'])
 def edit_classes():
     # Send the user to the login page if they try to visit this page while not logged in.
@@ -211,11 +212,6 @@ def edit_classes():
         # Check the db for the user's existing course/section combos so we can populate the edit-classes form.
         cursor.execute("""SELECT c.subject_code, c.course_number, c.subject_name, s.section_code, e.enrollment_id    FROM Sections s    JOIN Courses c ON s.course_id = c.course_id   JOIN Enrollments e ON s.section_id = e.section_id     WHERE e.user_id = %s""", (user_id,))
         existing_classes = cursor.fetchall()
-        
-      
-   
-
-        
 
         # If classes exist, start with a blank slate then populate them with db info.
         classes_data = [{"subject_code": subject_code, "course_number": course_number, "subject_name": subject_name, "section_code": section_code, "enrollment_id": enrollment_id}
@@ -320,6 +316,7 @@ def edit_classes():
             connection.close()
     return render_template('edit-classes.html', form=form, university_id=university_id, classes_data=classes_data, courses_dict=courses_dict)
 
+
 @app.route('/delete-course/<int:enrollment_id>', methods=['POST'])
 def delete_course(enrollment_id):
     if 'user' not in session:
@@ -362,11 +359,11 @@ def delete_course(enrollment_id):
     return redirect(url_for('edit_classes'))
 
 
-
 @app.route('/dashboard')
 def dashboard():
     # For now, just render the dashboard to show we can go there after logging in
     return render_template('dashboard.html')
+
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -374,6 +371,12 @@ def logout():
         session.clear()
         flash('You have been logged out!')
         return redirect(url_for('login'))
+
+
+@app.route('/creategroup', methods=['GET'])
+def creategroup():
+    return render_template('creategroup.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
