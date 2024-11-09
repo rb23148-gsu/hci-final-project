@@ -14,61 +14,50 @@
     {% endif %}
 
     <!-- Group Name -->
-    <form action="#" method="POST">
+    <form action="{{ url_for('create_group', section_id=section_id, invite_code=invite_code) }}" method="POST">
+        {{ form.hidden_tag() }}
         <div class="mb-3">
-            <label for="group_name" class="form-label">Group Name</label>
-            <input type="text" id="group_name" name="group_name" class="form-control" placeholder="Enter group name" required>
+            {{ form.group_name.label }} {{ form.group_name() }}
         </div>
-
-        <!-- Group Description -->
         <div class="mb-3">
-            <label for="group_description" class="form-label">Group Description</label>
-            <input type="text" id="group_description" name="group_description" class="form-control" placeholder="Enter group description">
+            {{ form.group_description.label }} {{ form.group_description() }}
         </div>
-
-        <!-- Availability -->
+    
         <h5>Your Availability</h5>
         <p class="mb-2" style="font-size: 0.9em;">Input your availability for meetings. Other users will add theirs later.</p>
         <div class="row">
-            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+            {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
                 <div class="row mb-3 align-items-center">
-                    <!-- Day Checkbox -->
                     <div class="col-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="{{ day|lower }}" name="availability[]" value="{{ day }}">
-                            <label class="form-check-label" for="{{ day|lower }}">{{ day }}</label>
+                            {{ form[day].selected(class="form-check-input") }}
+                            <label class="form-check-label" for="{{ form[day].selected.id }}">{{ day.capitalize() }}</label>
                         </div>
                     </div>
-                    <!-- Time Slots -->
-                    <div class="col-9">
-                        <div class="row">
-                            <div class="col">
-                                <input type="text" class="form-control mb-2" name="{{ day|lower }}_slot1" placeholder="3PM">
-                            </div>
-                            <div class="col">
-                                <input type="text" class="form-control mb-2" name="{{ day|lower }}_slot4" placeholder="4PM">
-                            </div>
-                        </div>
+                    <div class="col-6">
+                        {{ form[day].start_time(class="form-select mb-2") }}
+                    </div>
+                    <div class="col-6">
+                        {{ form[day].end_time(class="form-select mb-2") }}
                     </div>
                 </div>
             {% endfor %}
-        </div>
-        
+        </div>        
         <!-- Invite Code -->
         <div class="mt-4">
             <label for="invite_code" class="form-label">Invite others to this group:</label>
             <div class="input-group mb-2">
-                <input type="text" id="invite_code" name="invite_code" class="form-control text-center" value="01FBC3" readonly>
+                <input type="text" id="invite_code" name="invite_code" class="form-control text-center" value="{{ invite_code }}" readonly>
             </div>
             <p class="text-center mb-1" style="font-size: 0.9em; color: #555;">Share this invite link with others to join your group:</p>
             <p class="text-center">
-                <a href="https://grouploop.com/invite/01FBC3" class="btn btn-link" target="_blank">https://grouploop.com/invite/01FBC3</a>
+                <a href=""" class="btn btn-link" target="_blank">(Insert Invite Link Here)</a>
             </p>
         </div>
 
         <!-- Submit Button -->
         <div class="mt-3 text-center">
-            <button type="submit" class="btn btn-success btn-lg">Create Group</button>
+            {{ form.create_group(class="btn btn-primary") }}
         </div>
     </form>
 </div>

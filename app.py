@@ -5,10 +5,12 @@ from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 from decimal import Decimal
 from datetime import datetime
-from forms import LoginForm, CreateAccountForm, CourseForm, AddClassesForm, ClassEntryForm
+from forms import LoginForm, CreateAccountForm, CourseForm, AddClassesForm, ClassEntryForm, CreateGroupForm
 import re
 import os
 import pymysql
+import random
+import string
 
 load_dotenv()
 SQL_USER = os.environ.get('gl_username')
@@ -210,7 +212,7 @@ def edit_classes():
         cursor = connection.cursor()
 
         # Check the db for the user's existing course/section combos so we can populate the edit-classes form.
-        cursor.execute("""SELECT c.subject_code, c.course_number, c.subject_name, s.section_code, e.enrollment_id    FROM Sections s    JOIN Courses c ON s.course_id = c.course_id   JOIN Enrollments e ON s.section_id = e.section_id     WHERE e.user_id = %s""", (user_id,))
+        cursor.execute("""SELECT c.subject_code, c.course_number, c.subject_name, s.section_code, e.enrollment_id FROM Sections s JOIN Courses c ON s.course_id = c.course_id   JOIN Enrollments e ON s.section_id = e.section_id     WHERE e.user_id = %s""", (user_id,))
         existing_classes = cursor.fetchall()
 
         # If classes exist, start with a blank slate then populate them with db info.
@@ -358,12 +360,81 @@ def delete_course(enrollment_id):
 
     return redirect(url_for('edit_classes'))
 
+@app.route('/create-group/<int:section_id>', methods=['GET', 'POST'])
+def create_group(section_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    connection = connect_to_database()
+    cursor = connection.cursor()
+
+    form = CreateGroupForm()
+
+    try:
+        user = session['user']
+        # Check if the user is enrolled in the section
+        cursor.execute("SELECT COUNT(*) FROM Enrollments WHERE user_id = %s AND section_id = %s", (user, section_id))
+        enrollment_count = cursor.fetchone()[0]
+
+        if enrollment_count == 0:
+            flash("You must be enrolled in this section to create a group.")
+            return redirect(url_for('dashboard'))
+
+        invite_code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
+        cursor.execute("SELECT COUNT(*) FROM User_Groups WHERE invite_code = %s", (invite_code,))
+        
+        # Check if invite code already exists; regenerate if necessary
+        while cursor.fetchone()[0] > 0:
+            invite_code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
+            cursor.execute("SELECT COUNT(*) FROM User_Groups WHERE invite_code = %s", (invite_code,))
+
+        if request.method == 'POST' and form.validate_on_submit():
+            user = session['user']
+            group_name = form.group_name.data
+            group_description = form.group_description.data
+            
+            user_availability = {
+                "Monday": (form.monday.selected.data, form.monday.start_time.data, form.monday.end_time.data),
+                "Tuesday": (form.tuesday.selected.data, form.tuesday.start_time.data, form.tuesday.end_time.data),
+                "Wednesday": (form.wednesday.selected.data, form.wednesday.start_time.data, form.wednesday.end_time.data),
+                "Thursday": (form.thursday.selected.data, form.thursday.start_time.data, form.thursday.end_time.data),
+                "Friday": (form.friday.selected.data, form.friday.start_time.data, form.friday.end_time.data),
+                "Saturday": (form.saturday.selected.data, form.saturday.start_time.data, form.saturday.end_time.data),
+                "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
+            }
+
+            cursor.execute("Insert into User_Groups (group_name, group_description, section_id, availability, preferred_meeting_link, invite_code, creator_id) values (%s, %s, %s, %s, %s, %s, %s)", (group_name, group_description, section_id, str(user_availability), "Not Set", invite_code, user))
+            connection.commit()
+            print("Group successfully created!")
+            flash("Group successfully created!")
+
+            return render_template('create-group.html', form=form, invite_code=invite_code, section_id=section_id)
+
+    except Exception as e:
+        connection.rollback()
+        flash("There was an error creating the group.")
+        print(f"Error creating group: {e}")
+        connection.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+    return render_template('create-group.html', form=form, section_id=section_id, invite_code=invite_code)
+
+@app.route('/invite/<int:invite_code>', methods=['GET', 'POST'])
+def invite(invite_code):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('dashbopard.html')
 
 @app.route('/dashboard')
 def dashboard():
-    # For now, just render the dashboard to show we can go there after logging in
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
     return render_template('dashboard.html')
-
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -371,12 +442,6 @@ def logout():
         session.clear()
         flash('You have been logged out!')
         return redirect(url_for('login'))
-
-
-@app.route('/create-group', methods=['GET'])
-def create_group():
-    return render_template('create-group.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)

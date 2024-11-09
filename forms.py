@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, FieldList, FormField, validators
-from wtforms.validators import DataRequired, Regexp, Email, EqualTo
+from wtforms import StringField, BooleanField, PasswordField, SubmitField, SelectField, FieldList, FormField, validators
+from wtforms.validators import DataRequired, Optional, EqualTo
 
 ### LOGIN FORM ###
 
@@ -37,10 +37,35 @@ class AddClassesForm(FlaskForm):
     classes = FieldList(FormField(ClassEntryForm), min_entries=1, max_entries=6)
     add_classes = SubmitField('Add All Classes to Account')
 
-
 # ADDING COURSE FORM - Emmanuel
 class CourseForm(FlaskForm):
     course_name = StringField('Course Name', [validators.Length(min=1, max=100)])
     course_code = StringField('Course Code', [validators.Length(min=1, max=10)])
     university = SelectField('University', coerce=int)
 
+class AvailabilityDayForm(FlaskForm):
+    selected = BooleanField('Available')
+
+    time_choices = [("", "Select Time")] + [
+        (f"{hour_12}:{minute:02d} {am_pm}", f"{hour_12}:{minute:02d} {am_pm}")
+        for hour in range(24)
+        for minute in [0, 15, 30, 45]
+        for am_pm in ['AM' if hour < 12 else 'PM']
+        for hour_12 in [hour % 12 if hour % 12 != 0 else 12]
+    ]
+    
+    start_time = SelectField('Start Time', choices=time_choices)
+    end_time = SelectField('End Time', choices=time_choices)
+
+#Form for the create-group page.
+class CreateGroupForm(FlaskForm):
+    group_name = StringField('Group Name', validators=[DataRequired()])
+    group_description = StringField('Group Description', validators=[DataRequired()])
+    monday = FormField(AvailabilityDayForm)
+    tuesday = FormField(AvailabilityDayForm)
+    wednesday = FormField(AvailabilityDayForm)
+    thursday = FormField(AvailabilityDayForm)
+    friday = FormField(AvailabilityDayForm)
+    saturday = FormField(AvailabilityDayForm)
+    sunday = FormField(AvailabilityDayForm)
+    create_group = SubmitField('Create Group')
