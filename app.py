@@ -409,6 +409,12 @@ def create_group(section_id):
             cursor.execute("""INSERT INTO User_Groups (group_name, group_description, section_id, availability, preferred_meeting_link, invite_code, creator_id) 
                            VALUES (%s, %s, %s, %s, %s, %s, %s)""", (group_name, group_description, section_id, str(user_availability), "Not Set", invite_code, user))
             connection.commit()
+
+            group_id = cursor.lastrowid
+
+            cursor.execute("INSERT INTO Group_Membership (group_id, user_id, is_group_leader) VALUES (%s, %s, TRUE)", (group_id, user))
+            connection.commit()
+            
             print("Group successfully created!")
             flash("Group successfully created!")
 
