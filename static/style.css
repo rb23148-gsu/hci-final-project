@@ -57,6 +57,10 @@ body{
     .nav-link-text {
         margin: 0;
     }
+
+    #logout-button{
+        margin-left: 25px;
+    }
 }
 
 @media only screen and (min-width: 768px) {
@@ -73,6 +77,10 @@ body{
 
     .col-lg-6 {
         max-width: 49%;
+    }
+
+    #logout-button{
+        margin-left: 0;
     }
 }
 

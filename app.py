@@ -392,7 +392,6 @@ def create_group(section_id):
             cursor.execute("SELECT COUNT(*) FROM User_Groups WHERE invite_code = %s", (invite_code,))
 
         if request.method == 'POST' and form.validate_on_submit():
-            # user = session['user']
             group_name = form.group_name.data
             group_description = form.group_description.data
             
@@ -414,7 +413,7 @@ def create_group(section_id):
 
             cursor.execute("INSERT INTO Group_Membership (group_id, user_id, is_group_leader) VALUES (%s, %s, TRUE)", (group_id, user))
             connection.commit()
-            
+
             print("Group successfully created!")
             flash("Group successfully created!")
 
