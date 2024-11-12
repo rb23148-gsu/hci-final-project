@@ -212,7 +212,10 @@ def edit_classes():
         cursor = connection.cursor()
 
         # Check the db for the user's existing course/section combos so we can populate the edit-classes form.
-        cursor.execute("""SELECT c.subject_code, c.course_number, c.subject_name, s.section_code, e.enrollment_id FROM Sections s JOIN Courses c ON s.course_id = c.course_id   JOIN Enrollments e ON s.section_id = e.section_id     WHERE e.user_id = %s""", (user_id,))
+        cursor.execute("""SELECT c.subject_code, c.course_number, c.subject_name, s.section_code, e.enrollment_id FROM Sections s 
+                       JOIN Courses c ON s.course_id = c.course_id   
+                       JOIN Enrollments e ON s.section_id = e.section_id     
+                       WHERE e.user_id = %s""", (user_id,))
         existing_classes = cursor.fetchall()
 
         # If classes exist, start with a blank slate then populate them with db info.
@@ -389,7 +392,7 @@ def create_group(section_id):
             cursor.execute("SELECT COUNT(*) FROM User_Groups WHERE invite_code = %s", (invite_code,))
 
         if request.method == 'POST' and form.validate_on_submit():
-            user = session['user']
+            # user = session['user']
             group_name = form.group_name.data
             group_description = form.group_description.data
             
@@ -403,7 +406,8 @@ def create_group(section_id):
                 "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
             }
 
-            cursor.execute("Insert into User_Groups (group_name, group_description, section_id, availability, preferred_meeting_link, invite_code, creator_id) values (%s, %s, %s, %s, %s, %s, %s)", (group_name, group_description, section_id, str(user_availability), "Not Set", invite_code, user))
+            cursor.execute("""INSERT INTO User_Groups (group_name, group_description, section_id, availability, preferred_meeting_link, invite_code, creator_id) 
+                           VALUES (%s, %s, %s, %s, %s, %s, %s)""", (group_name, group_description, section_id, str(user_availability), "Not Set", invite_code, user))
             connection.commit()
             print("Group successfully created!")
             flash("Group successfully created!")
@@ -427,14 +431,54 @@ def invite(invite_code):
     if 'user' not in session:
         return redirect(url_for('login'))
     
-    return render_template('dashbopard.html')
+    return render_template('dashboard.html')
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
     
-    return render_template('dashboard.html')
+    user_id = session['user']
+    
+    connection = connect_to_database()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    
+    # Get user's joined groups
+    cursor.execute("""
+        SELECT g.group_name, s.section_code, c.subject_name, g.group_id
+        FROM Group_Membership gm
+        JOIN User_Groups g ON gm.group_id = g.group_id
+        JOIN Sections s ON g.section_id = s.section_id
+        JOIN Courses c ON s.course_id = c.course_id
+        WHERE gm.user_id = %s
+    """, (user_id,))
+    user_groups = cursor.fetchall()
+
+    # Get user's available groups based on enrollments.
+    cursor.execute("""
+        SELECT g.group_name, g.group_id, c.subject_name, s.section_code, e.section_id
+        FROM Enrollments e
+        JOIN Sections s ON e.section_id = s.section_id
+        JOIN Courses c ON s.course_id = c.course_id
+        LEFT JOIN User_Groups g ON g.section_id = s.section_id
+        WHERE e.user_id = %s AND g.group_id IS NOT NULL 
+        AND g.group_id NOT IN (
+            SELECT gm.group_id
+            FROM Group_Membership gm
+            WHERE gm.user_id = %s)""", (user_id, user_id))
+    available_groups = cursor.fetchall()
+
+    # Get the user's enrollments so they can create a group.
+    cursor.execute("""
+        SELECT c.subject_name, s.section_code, e.section_id
+        FROM Enrollments e
+        JOIN Sections s ON e.section_id = s.section_id
+        JOIN Courses c ON s.course_id = c.course_id
+        WHERE e.user_id = %s
+    """, (user_id,))
+    user_enrollments = cursor.fetchall()
+
+    return render_template('dashboard.html', user_groups=user_groups, user_enrollments=user_enrollments, available_groups=available_groups)
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -442,6 +486,10 @@ def logout():
         session.clear()
         flash('You have been logged out!')
         return redirect(url_for('login'))
+
+@app.route('/join-request', methods=['POST'])
+def join_request():
+    return render_template('dashboard.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

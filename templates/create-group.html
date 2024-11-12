@@ -3,7 +3,7 @@
 {% block title %}Create Group{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-5" id="create-group-container">
     <h2 class="text-center">Create A Group</h2>
 
     {% if class_details %}
@@ -14,13 +14,13 @@
     {% endif %}
 
     <!-- Group Name -->
-    <form action="{{ url_for('create_group', section_id=section_id, invite_code=invite_code) }}" method="POST">
+    <form class="" action="{{ url_for('create_group', section_id=section_id, invite_code=invite_code) }}" method="POST">
         {{ form.hidden_tag() }}
         <div class="mb-3">
-            {{ form.group_name.label }} {{ form.group_name() }}
+            {{ form.group_name.label }} {{ form.group_name(class="d-block") }}
         </div>
         <div class="mb-3">
-            {{ form.group_description.label }} {{ form.group_description() }}
+            {{ form.group_description.label }} {{ form.group_description(class="d-block") }}
         </div>
     
         <h5>Your Availability</h5>
@@ -28,16 +28,16 @@
         <div class="row">
             {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
                 <div class="row mb-3 align-items-center">
-                    <div class="col-3">
+                    <div class="col-4">
                         <div class="form-check">
                             {{ form[day].selected(class="form-check-input") }}
                             <label class="form-check-label" for="{{ form[day].selected.id }}">{{ day.capitalize() }}</label>
                         </div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
                         {{ form[day].start_time(class="form-select mb-2") }}
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
                         {{ form[day].end_time(class="form-select mb-2") }}
                     </div>
                 </div>
@@ -57,7 +57,7 @@
 
         <!-- Submit Button -->
         <div class="mt-3 text-center">
-            {{ form.create_group(class="btn btn-primary") }}
+            {{ form.create_group(class="btn btn-primary btn-success") }}
         </div>
     </form>
 </div>

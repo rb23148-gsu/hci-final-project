@@ -33,6 +33,10 @@ body{
     text-transform: uppercase;
 }
 
+#my-groups-info > p {
+    margin-bottom: 0;
+}
+
 /* START MEDIA BREAKPOINTS */
 @media only screen and (min-width: 360px) {
 
@@ -56,7 +60,9 @@ body{
 }
 
 @media only screen and (min-width: 768px) {
-
+    #create-group-container {
+        width: 75%;
+    }
 }
 
 @media only screen and (min-width: 992px) {
@@ -75,11 +81,15 @@ body{
     .col-lg-6 {
         max-width: 48%;
     }
+
+    
 }
 
 /* Background-size: cover; makes it so that the image stretches to fill the entire container. */
 @media only screen and (min-width: 1400px) {
-
+    #create-group-container {
+        width: 60%;
+    }
 }
 
 @media only screen and (min-width: 1600px) {
