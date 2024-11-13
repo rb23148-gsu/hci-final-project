@@ -64,8 +64,12 @@
                             <div>
                                 {% for enrollment in user_enrollments %}
                                     <input type="radio" id="section-{{ enrollment.section_id }}" name="section" value="{{ enrollment.section_id }}"
-                                    {% if loop.first %} checked {% endif %}>
-                                    <label class="d-inline" for="section-{{ enrollment.section_id }}">{{ enrollment.subject_name }} - Section {{ enrollment.section_code }}</label><br>
+                                    {% if enrollment.has_group %} disabled {% endif %}
+                                    {% if loop.first and not enrollment.has_group %} checked {% endif %}>
+                                    <label class="d-inline" for="section-{{ enrollment.section_id }}">
+                                        {{ enrollment.subject_name }} - Section {{ enrollment.section_code }}
+                                        {% if enrollment.has_group %} (Group already created) {% endif %}
+                                    </label><br>
                                 {% endfor %}
                             </div>
                             <div class="form-group">
@@ -79,7 +83,7 @@
                 {% endif %}
             </div>
         </div>
-    </div>
+        
     
 
     <script>
