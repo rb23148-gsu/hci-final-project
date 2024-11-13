@@ -394,6 +394,12 @@ def create_group(section_id):
             invite_code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
             cursor.execute("SELECT COUNT(*) FROM User_Groups WHERE invite_code = %s", (invite_code,))
 
+        #If user has already created a group for this class section, don't allow them to create another
+        cursor.execute("Select Count(*) from User_Groups where creator_id = %s and section_id = %s", (user, section_id))
+        if cursor.fetchone()[0] > 0:
+            flash("You have already created a group for this class section.")
+            return redirect(url_for('dashboard'))
+
         if request.method == 'POST' and form.validate_on_submit():
             group_name = form.group_name.data
             group_description = form.group_description.data
