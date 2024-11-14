@@ -310,7 +310,7 @@ def edit_classes():
             flash("Classes successfully updated!")
             print("Classes successfully updated!")
 
-            # return redirect(url_for('dashboard'))
+            return redirect(url_for('edit_classes'))
 
     except Exception as e:
         flash("There was an error editing classes.")
