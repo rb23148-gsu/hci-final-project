@@ -12,7 +12,14 @@
     {% else %}
         <p class="text-center">Group details not found.</p>
     {% endif %}
-
+    
+     <!-- Edit Group Details Button (Visible only if the logged-in user is the creator) -->
+    {% if user.id == group_details['creator_id'] %}
+        <div class="text-center mt-3">
+            <a href="{% url 'create-group' group_id=group_details.id %}" class="btn btn-warning btn-lg">Edit Group Details</a>
+        </div>
+    {% endif %}
+    
     <!-- Availability Section -->
     <h5 class="mt-4">Input availability for meetings</h5>
     <form method="POST">
