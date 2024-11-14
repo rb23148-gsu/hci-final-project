@@ -93,8 +93,10 @@
             const radioButtons = document.querySelectorAll('input[name="section"]');
             
             // Set initial form action based on the pre-selected section (not doing this causes issues)
-            const selectedSectionId = document.querySelector('input[name="section"]:checked').value;
-            form.action = "/create-group/" + selectedSectionId;
+            const selectedSectionId = document.querySelector('input[name="section"]:checked')?.value;
+            if (selectedSectionId) {
+                form.action = "/create-group/" + selectedSectionId;
+            }
     
             // Update form action section id when a radio button is selected
             radioButtons.forEach(button => {
