@@ -12,7 +12,24 @@
             {{ class_details[2] }} Section {{ class_details[3] }}
         </p>
     {% endif %}
+    
+    {% if group_created %}
+    <!-- Success Message: Show this if the group is successfully created -->
+    <div class="alert alert-success text-center mt-3">
+        <strong>Group successfully created!</strong>
+    </div>
+    <!-- Display the invite code and link after group creation -->
+    <div class="text-center mt-3">
+        <p>Share this invite link with others to join your group:</p>
+        <input type="text" class="form-control d-inline-block w-auto" value="{{ invite_code }}" readonly>
+        <p class="mt-2">
+            <a href="{{ url_for('join_group', invite_code=invite_code) }}" class="btn btn-link" target="_blank">Join this Group</a>
+        </p>
+    </div>
 
+    
+    <!-- Form Section -->
+{% endif %}
     <!-- Group Name -->
     <form class="" action="{{ url_for('create_group', section_id=section_id, invite_code=invite_code) }}" method="POST">
         {{ form.hidden_tag() }}
