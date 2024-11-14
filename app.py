@@ -426,7 +426,7 @@ def create_group(section_id):
             print("Group successfully created!")
             flash("Group successfully created!")
 
-            return redirect(url_for('dashboard'))
+            return render_template('create-group.html', form=form, invite_code=invite_code, section_id=section_id)
         
     except Exception as e:
         connection.rollback()
@@ -544,6 +544,39 @@ def group(group_id):
 @app.route('/join-request', methods=['POST'])
 def join_request():
     return render_template('dashboard.html')
+
+@app.route('/group-page/<int:group_id>')
+def group_page(group_id):
+    # Get group details based on group_id
+    connection = connect_to_database()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    group_details = None
+
+    try:
+        # Query for group details
+        query = """
+            SELECT g.group_name, c.subject_name, s.section_code, g.availability
+            FROM User_Groups g
+            JOIN Sections s ON g.section_id = s.section_id
+            JOIN Courses c ON s.course_id = c.course_id
+            WHERE g.group_id = %s
+        """
+        cursor.execute(query, (group_id,))
+        group_details = cursor.fetchone()
+
+        if not group_details:
+            flash("Group not found or you do not have access to it.")
+            return redirect(url_for('dashboard'))
+
+    except Exception as e:
+        flash("An error occurred while fetching group details.")
+        print(f"Error fetching group details: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
+    # Pass group details to the template
+    return render_template('group-page.html', group_details=group_details)
 
 @app.route('/logout', methods=['POST'])
 def logout():

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Group Page{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Group Header -->
+    {% if group_details %}
+        <div class="text-center bg-primary text-white py-2 rounded">
+            <h4>Group {{ group_details['group_name'] }} - {{ group_details['subject_name'] }} Section {{ group_details['section_code'] }}</h4>
+        </div>
+    {% else %}
+        <p class="text-center">Group details not found.</p>
+    {% endif %}
+
+    <!-- Availability Section -->
+    <h5 class="mt-4">Input availability for meetings</h5>
+    <form method="POST">
+        <div class="row">
+            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="{{ day|lower }}" name="availability[]" value="{{ day }}">
+                            <label class="form-check-label" for="{{ day|lower }}">{{ day }}</label>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <input type="text" class="form-control mb-2" name="{{ day|lower }}_start_time" placeholder="Start Time">
+                    </div>
+                    <div class="col-3">
+                        <input type="text" class="form-control mb-2" name="{{ day|lower }}_end_time" placeholder="End Time">
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary">Update Availability</button>
+    </form>
+
+    <!-- Group Availability -->
+    <h5 class="mt-4">Group {{ group_details['group_name'] }} Availability</h5>
+    <p>Based on group input, the best times to meet are:</p>
+    <ul>
+        <li><strong>Wednesday:</strong>{{ group_details['group_availability'] }}</li>
+        <li><strong>Saturday:</strong> 9AM - 11AM</li>
+    </ul>
+
+    <!-- Preferred Meeting Spot -->
+    <h5 class="mt-4">Group {{ group_details['group_name'] }} Preferred Meeting Spot</h5>
+    <p><a href="https://zoom.us" target="_blank" class="text-primary">Zoom Link</a> - Next Meeting: 10/16/2024</p>
+
+    <!-- News Feed -->
+    <h5 class="mt-4">Group {{ group_details['group_name'] }} News Feed</h5>
+    <div class="bg-light p-3 rounded">
+        <div>
+            <p><strong>10/13/2024</strong> - Posted by Group Member</p>
+            <ul>
+                <li>OMG This project is due tonight at 11:59PM!</li>
+                <li>I'm working on this part right now - Group Member</li>
+                <li>I won't make it. My dog ate my motherboard. - Group Member</li>
+            </ul>
+        </div>
+        <form method="POST" class="mt-2">
+            <input type="text" class="form-control mb-2" placeholder="Add a reply...">
+            <button type="submit" class="btn btn-success">Reply</button>
+        </form>
+    </div>
+
+    <!-- Create New Post -->
+    <div class="text-center mt-4">
+        <button type="button" class="btn btn-success btn-lg">Create New Post</button>
+    </div>
+</div>
+{% endblock %}
