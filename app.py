@@ -547,6 +547,9 @@ def join_request():
 
 @app.route('/group-page/<int:group_id>')
 def group_page(group_id):
+
+    user_id = session['user']
+
     # Get group details based on group_id
     connection = connect_to_database()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
@@ -555,7 +558,7 @@ def group_page(group_id):
     try:
         # Query for group details
         query = """
-            SELECT g.group_name, c.subject_name, s.section_code, g.availability
+            SELECT g.group_name, c.subject_name, s.section_code, g.availability, g.creator_id, s.section_id
             FROM User_Groups g
             JOIN Sections s ON g.section_id = s.section_id
             JOIN Courses c ON s.course_id = c.course_id
@@ -576,7 +579,7 @@ def group_page(group_id):
         connection.close()
 
     # Pass group details to the template
-    return render_template('group-page.html', group_details=group_details)
+    return render_template('group-page.html', group_details=group_details, user_id=user_id)
 
 @app.route('/logout', methods=['POST'])
 def logout():

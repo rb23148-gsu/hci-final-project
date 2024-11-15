@@ -14,9 +14,9 @@
     {% endif %}
     
      <!-- Edit Group Details Button (Visible only if the logged-in user is the creator) -->
-    {% if user.id == group_details['creator_id'] %}
+    {% if user_id == group_details.creator_id %}
         <div class="text-center mt-3">
-            <a href="{% url 'create-group' group_id=group_details.id %}" class="btn btn-warning btn-lg">Edit Group Details</a>
+            <a href="{{ url_for('create_group', section_id=group_details['section_id']) }}" class="btn btn-warning btn-lg">Edit Group Details</a>
         </div>
     {% endif %}
     
