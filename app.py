@@ -882,6 +882,36 @@ def add_availability(group_id):
             connection.close()
     return redirect(request.referrer)
 
+# Helper function to convert time string to datetime object
+def convert_time_to_datetime(time_str):
+    return datetime.strptime(time_str, "%H:%M")
+
+
+# Helper function to find overlapping times 
+def find_overlap(time_intervals):
+    # Sorting intervals by start time
+    time_intervals.sort(key=lambda x: x[0])
+    
+    overlapping_times = []
+    start, end = time_intervals[0]  # Initializing with the first time interval
+
+    for i in range(1, len(time_intervals)):
+        current_start, current_end = time_intervals[i]
+        
+        # If intervals overlap
+        if current_start <= end:
+            # Update the end of the overlap
+            end = max(end, current_end)
+        else:
+            # If it doesn't overlap, store the previous one and reset
+            overlapping_times.append((start, end))
+            start, end = current_start, current_end
+
+    # Add the final overlap
+    overlapping_times.append((start, end))
+
+    return overlapping_times
+    
 # Main function to calculate best meeting time for the group
 def get_best_meeting_time(group_availabilities):
     best_times = {}
