@@ -58,24 +58,39 @@
 
     <!-- News Feed -->
     <h5 class="mt-4">Group {{ group_details['group_name'] }} News Feed</h5>
+
     <div class="bg-light p-3 rounded">
-        <div>
-            <p><strong>10/13/2024</strong> - Posted by Group Member</p>
+        {% for post in posts %}
+        <div class="mb-4">
+            <p><strong>{{ post.created_at.strftime('%m/%d/%Y') }}</strong> - Posted by {{ post.username }}</p>
+            <h6>{{ post.post_title }}</h6>
             <ul>
-                <li>OMG This project is due tonight at 11:59PM!</li>
-                <li>I'm working on this part right now - Group Member</li>
-                <li>I won't make it. My dog ate my motherboard. - Group Member</li>
+                <li>{{ post.post_content }}</li>
+                {% for comment in post.comments %}
+                <li>
+                    {{ comment.comment_content }} - {{ comment.username }} ({{ comment.created_at.strftime('%m/%d/%Y %H:%M') }})
+                </li>
+                {% endfor %}
             </ul>
+
+            <!-- Comment Form -->
+            <form method="POST" action="{{ url_for('add_comment', post_id=post.post_id) }}" class="mt-2">
+                {{ comment_form.hidden_tag() }}
+                {{ comment_form.comment_content(class_="form-control mb-2", placeholder="Add a reply...") }}
+                <button type="submit" class="btn btn-success">Reply</button>
+            </form>
         </div>
-        <form method="POST" class="mt-2">
-            <input type="text" class="form-control mb-2" placeholder="Add a reply...">
-            <button type="submit" class="btn btn-success">Reply</button>
-        </form>
+        {% endfor %}
     </div>
 
     <!-- Create New Post -->
     <div class="text-center mt-4">
-        <button type="button" class="btn btn-success btn-lg">Create New Post</button>
+        <form method="POST" action="{{ url_for('add_post', group_id=group_details['group_id']) }}">
+            {{ post_form.hidden_tag() }}
+            {{ post_form.post_title(class_="form-control mb-2", placeholder="Post Title") }}
+            {{ post_form.post_content(class_="form-control mb-2", placeholder="What's on your mind?", rows="3") }}
+            <button type="submit" class="btn btn-success btn-lg">Create New Post</button>
+        </form>
     </div>
 </div>
 {% endblock %}

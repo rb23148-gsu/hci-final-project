@@ -1,16 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import Form, BooleanField, StringField, validators
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
-from decimal import Decimal
-from datetime import datetime
-from forms import LoginForm, CreateAccountForm, CourseForm, AddClassesForm, ClassEntryForm, CreateGroupForm
-import re
-import os
-import pymysql
-import random
-import string
+from forms import LoginForm, CreateAccountForm, CourseForm, AddClassesForm, ClassEntryForm, CreateGroupForm, PostForm, CommentForm, EditGroupForm
+import os, pymysql, random, string, ast
 
 load_dotenv()
 SQL_USER = os.environ.get('gl_username')
@@ -199,9 +192,6 @@ def edit_classes():
     # Send the user to the login page if they try to visit this page while not logged in.
     if 'user' not in session:
         return redirect(url_for('login'))
-    
-    if request.method == 'POST':
-         print(f"Form data: {request.form}")
 
     # Get user id from session
     user_id = session['user']
@@ -399,6 +389,13 @@ def create_group(section_id):
         if cursor.fetchone()[0] > 0:
             flash("You have already created a group for this class section.")
             return redirect(url_for('dashboard'))
+        
+        cursor.execute("SELECT group_id FROM User_Groups WHERE creator_id = %s AND section_id = %s", (user, section_id))
+        existing_group = cursor.fetchone()
+
+        if existing_group:
+            flash("You already have a group for this section. Redirecting to edit page.")
+            return redirect(url_for('edit_group', group_id=existing_group[0]))
 
         if request.method == 'POST' and form.validate_on_submit():
             group_name = form.group_name.data
@@ -440,6 +437,102 @@ def create_group(section_id):
             connection.close()
     return render_template('create-group.html', form=form, section_id=section_id, invite_code=invite_code)
 
+@app.route('/edit-group/<int:group_id>', methods=['GET', 'POST'])
+def edit_group(group_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    connection = connect_to_database()
+    cursor = connection.cursor()
+    form = EditGroupForm()
+
+    try:
+        user = session['user']
+
+        # Fetch group details for the given group_id
+        cursor.execute("SELECT group_name, group_description, availability FROM User_Groups WHERE group_id = %s", (group_id,))
+        group = cursor.fetchone()
+
+        if not group:
+            flash("Group not found.")
+            return redirect(url_for('dashboard'))
+
+        group_name, group_description, user_availability_str = group
+
+        # Convert the string representation of the dictionary back to a dictionary
+        user_availability = ast.literal_eval(user_availability_str)
+
+        # Pre-fill the form with existing group data
+        if request.method == 'GET':
+            form.group_name.data = group_name
+            form.group_description.data = group_description
+
+            # Populate availability fields with the existing data
+            for day, (selected, start_time, end_time) in user_availability.items():
+                if day == "Monday":
+                    form.monday.selected.data = selected
+                    form.monday.start_time.data = start_time
+                    form.monday.end_time.data = end_time
+                elif day == "Tuesday":
+                    form.tuesday.selected.data = selected
+                    form.tuesday.start_time.data = start_time
+                    form.tuesday.end_time.data = end_time
+                elif day == "Wednesday":
+                    form.wednesday.selected.data = selected
+                    form.wednesday.start_time.data = start_time
+                    form.wednesday.end_time.data = end_time
+                elif day == "Thursday":
+                    form.thursday.selected.data = selected
+                    form.thursday.start_time.data = start_time
+                    form.thursday.end_time.data = end_time
+                elif day == "Friday":
+                    form.friday.selected.data = selected
+                    form.friday.start_time.data = start_time
+                    form.friday.end_time.data = end_time
+                elif day == "Saturday":
+                    form.saturday.selected.data = selected
+                    form.saturday.start_time.data = start_time
+                    form.saturday.end_time.data = end_time
+                elif day == "Sunday":
+                    form.sunday.selected.data = selected
+                    form.sunday.start_time.data = start_time
+                    form.sunday.end_time.data = end_time
+
+        if request.method == 'POST' and form.validate_on_submit():
+            new_group_name = form.group_name.data
+            new_group_description = form.group_description.data
+
+            # Update availability from the form data
+            user_availability = {
+                "Monday": (form.monday.selected.data, form.monday.start_time.data, form.monday.end_time.data),
+                "Tuesday": (form.tuesday.selected.data, form.tuesday.start_time.data, form.tuesday.end_time.data),
+                "Wednesday": (form.wednesday.selected.data, form.wednesday.start_time.data, form.wednesday.end_time.data),
+                "Thursday": (form.thursday.selected.data, form.thursday.start_time.data, form.thursday.end_time.data),
+                "Friday": (form.friday.selected.data, form.friday.start_time.data, form.friday.end_time.data),
+                "Saturday": (form.saturday.selected.data, form.saturday.start_time.data, form.saturday.end_time.data),
+                "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
+            }
+
+            cursor.execute("""UPDATE User_Groups SET group_name = %s, group_description = %s, availability = %s WHERE group_id = %s""", 
+            (new_group_name, new_group_description, str(user_availability), group_id))
+            connection.commit()
+
+            flash("Group details updated successfully!")
+            return redirect(url_for('dashboard'))
+    
+    except Exception as e:
+        connection.rollback()
+        flash("There was an error updating the group.")
+        print(f"Error updating group: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+    return render_template('edit-group.html', form=form, group_id=group_id)
+
+
 @app.route('/invite/<int:invite_code>', methods=['GET', 'POST'])
 def invite(invite_code):
     if 'user' not in session:
@@ -468,7 +561,7 @@ def invite(invite_code):
             cursor.execute("Insert into Group_Membership (group_id, user_id, is_group_leader) VALUES (%s, %s, FALSE)", (group_id, user))
             connection.commit()
 
-            return redirect(url_for('group', group_id=group_id))
+            return redirect(url_for('group_page', group_id=group_id))
 
     except Exception as e:
         connection.rollback()
@@ -534,31 +627,27 @@ def dashboard():
     """, (user_id, user_id))
     user_enrollments = cursor.fetchall()
 
-    print(user_enrollments)
     return render_template('dashboard.html', user_groups=user_groups, user_enrollments=user_enrollments, available_groups=available_groups)
-
-@app.route('/group', methods=['POST'])
-def group(group_id):
-    return render_template('group-page.html', group_id=group_id)
 
 @app.route('/join-request', methods=['POST'])
 def join_request():
     return render_template('dashboard.html')
 
-@app.route('/group-page/<int:group_id>')
+@app.route('/group-page/<int:group_id>', methods=['GET', 'POST'])
 def group_page(group_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
 
     user_id = session['user']
-
-    # Get group details based on group_id
+    post_form = PostForm()
+    comment_form = CommentForm()
     connection = connect_to_database()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
-    group_details = None
 
     try:
-        # Query for group details
+        # Fetch group details
         query = """
-            SELECT g.group_name, c.subject_name, s.section_code, g.availability, g.creator_id, s.section_id
+            SELECT g.group_id, g.group_name, c.subject_name, s.section_code, g.availability, g.creator_id, s.section_id
             FROM User_Groups g
             JOIN Sections s ON g.section_id = s.section_id
             JOIN Courses c ON s.course_id = c.course_id
@@ -567,19 +656,80 @@ def group_page(group_id):
         cursor.execute(query, (group_id,))
         group_details = cursor.fetchone()
 
+
         if not group_details:
             flash("Group not found or you do not have access to it.")
             return redirect(url_for('dashboard'))
 
+        # Fetch posts and their comments
+        query = """
+            SELECT p.post_id, p.post_title, p.post_content, p.created_at, u.username
+            FROM Group_Post p
+            JOIN Users u ON p.user_id = u.user_id
+            WHERE p.group_id = %s
+            ORDER BY p.created_at DESC
+        """
+        cursor.execute(query, (group_id,))
+        posts = cursor.fetchall()
+
+        for post in posts:
+            query = """
+                SELECT c.comment_content, c.created_at, u.username
+                FROM Post_Comment c
+                JOIN Users u ON c.user_id = u.user_id
+                WHERE c.post_id = %s
+                ORDER BY c.created_at ASC
+            """
+            cursor.execute(query, (post['post_id'],))
+            post['comments'] = cursor.fetchall()
+
     except Exception as e:
-        flash("An error occurred while fetching group details.")
-        print(f"Error fetching group details: {e}")
+        flash("An error occurred while fetching posts and comments.")
+        print(f"Error: {e}")
     finally:
         cursor.close()
         connection.close()
 
-    # Pass group details to the template
-    return render_template('group-page.html', group_details=group_details, user_id=user_id)
+    return render_template('group-page.html', group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form)
+
+@app.route('/add-post/<int:group_id>', methods=['POST'])
+def add_post(group_id):
+    post_form = PostForm()
+    if post_form.validate_on_submit():
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        try:
+            query = """INSERT INTO Group_Post (group_id, user_id, post_title, post_content) VALUES (%s, %s, %s, %s)"""
+            cursor.execute(query, (group_id, session['user'], post_form.post_title.data, post_form.post_content.data))
+            connection.commit()
+            flash("Post created successfully!")
+        except Exception as e:
+            flash("An error occurred while creating the post.")
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
+            connection.close()
+    return redirect(url_for('group_page', group_id=group_id))
+
+@app.route('/add-comment/<int:post_id>', methods=['POST'])
+def add_comment(post_id):
+    comment_form = CommentForm()
+    if comment_form.validate_on_submit():
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        try:
+            query = """INSERT INTO Post_Comment (post_id, user_id, comment_content) VALUES (%s, %s, %s)"""
+            cursor.execute(query, (post_id, session['user'], comment_form.comment_content.data))
+            connection.commit()
+            flash("Comment added successfully!")
+        except Exception as e:
+            flash("An error occurred while adding the comment.")
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
+            connection.close()
+    return redirect(request.referrer)
+
 
 @app.route('/logout', methods=['POST'])
 def logout():

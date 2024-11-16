@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, PasswordField, SubmitField, SelectField, FieldList, FormField, validators
+from wtforms import StringField, BooleanField, PasswordField, SubmitField, SelectField, FieldList, FormField, validators, TextAreaField
 from wtforms.validators import DataRequired, Optional, EqualTo
 
 ### LOGIN FORM ###
@@ -60,7 +60,7 @@ class AvailabilityDayForm(FlaskForm):
 #Form for the create-group page.
 class CreateGroupForm(FlaskForm):
     group_name = StringField('Group Name', validators=[DataRequired()])
-    group_description = StringField('Group Description', validators=[DataRequired()])
+    group_description = TextAreaField('Group Description', validators=[DataRequired()])
     monday = FormField(AvailabilityDayForm)
     tuesday = FormField(AvailabilityDayForm)
     wednesday = FormField(AvailabilityDayForm)
@@ -69,3 +69,24 @@ class CreateGroupForm(FlaskForm):
     saturday = FormField(AvailabilityDayForm)
     sunday = FormField(AvailabilityDayForm)
     create_group = SubmitField('Create Group')
+
+class EditGroupForm(FlaskForm):
+    group_name = StringField('Group Name', validators=[DataRequired()])
+    group_description = TextAreaField('Group Description', validators=[DataRequired()])
+    monday = FormField(AvailabilityDayForm)
+    tuesday = FormField(AvailabilityDayForm)
+    wednesday = FormField(AvailabilityDayForm)
+    thursday = FormField(AvailabilityDayForm)
+    friday = FormField(AvailabilityDayForm)
+    saturday = FormField(AvailabilityDayForm)
+    sunday = FormField(AvailabilityDayForm)
+    edit_group = SubmitField('Edit Group')
+
+class PostForm(FlaskForm):
+    post_title = StringField('Post Title', validators=[DataRequired()])
+    post_content = TextAreaField('Post Content', validators=[DataRequired()])
+    submit = SubmitField('Create Post')
+
+class CommentForm(FlaskForm):
+    comment_content = TextAreaField('Comment', validators=[DataRequired()])
+    submit = SubmitField('Reply')
