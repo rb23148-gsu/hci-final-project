@@ -105,3 +105,12 @@ body{
 }
 
 /* END MEDIA BREAKPOINTS */
+
+.dropdown, .dropdown-center, .dropend, .dropstart, .dropup, .dropup-center {
+    position: relative;
+    list-style-type: none; 
+}
+
+.bd-navbar .dropdown-menu-end {
+    --bs-dropdown-min-width: 8rem;
+}

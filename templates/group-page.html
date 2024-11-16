@@ -19,40 +19,14 @@
             <a href="{{ url_for('edit_group', group_id=group_details['group_id']) }}" class="btn btn-warning btn-lg">Edit Group Details</a>
         </div>
     {% endif %}
-    
-    <!-- Availability Section -->
-    <h5 class="mt-4">Input availability for meetings</h5>
-    <form action= "{{ url_for('add_availability', group_id=group_details['group_id']) }}" method="POST">
-        {{ form.hidden_tag() }}
-        <div class="row">
-            {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
-                <div class="row mb-3 align-items-center">
-                    <div class="col-4">
-                        <div class="form-check">
-                            {{ form[day].selected(class="form-check-input") }}
-                            <label class="form-check-label" for="{{ form[day].selected.id }}">{{ day.capitalize() }}</label>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        {{ form[day].start_time(class="form-select mb-2") }}
-                    </div>
-                    <div class="col-4">
-                        {{ form[day].end_time(class="form-select mb-2") }}
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-        <div class="mt-3 text-center">
-            {{ form.update_availability(class="btn btn-primary btn-success") }}
-        </div>
-    </form>
 
     <!-- Group Availability -->
     <h5 class="mt-4">Group {{ group_details['group_name'] }} Availability</h5>
     <p>Based on group input, the best times to meet are:</p>
     <ul>
-        <li><strong>Wednesday:</strong>{{ group_details['group_availability'] }}</li>
-        <li><strong>Saturday:</strong> 9AM - 11AM</li>
+        {% for item in formatted_group_availability %}
+        <li>{{ item }}</li>
+        {% endfor %}
     </ul>
 
     <!-- Preferred Meeting Spot -->
@@ -62,7 +36,7 @@
     <!-- News Feed -->
     <h5 class="mt-4">Group {{ group_details['group_name'] }} News Feed</h5>
 
-    <div class="bg-light p-3 rounded">
+    <div class="p-3 rounded">
         {% for post in posts %}
         <div class="mb-4">
             <p><strong>{{ post.created_at.strftime('%m/%d/%Y') }}</strong> - Posted by {{ post.username }}</p>
@@ -95,5 +69,33 @@
             <button type="submit" class="btn btn-success btn-lg">Create New Post</button>
         </form>
     </div>
+
+    <!-- Availability Section -->
+    <h5 class="mt-4">Input availability for meetings</h5>
+    <form action= "{{ url_for('add_availability', group_id=group_details['group_id']) }}" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="row">
+            {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4">
+                        <div class="form-check">
+                            {{ form[day].selected(class="form-check-input") }}
+                            <label class="form-check-label" for="{{ form[day].selected.id }}">{{ day.capitalize() }}</label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        {{ form[day].start_time(class="form-select mb-2") }}
+                    </div>
+                    <div class="col-4">
+                        {{ form[day].end_time(class="form-select mb-2") }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="mt-3 text-center">
+            {{ form.update_availability(class="btn btn-primary btn-success") }}
+        </div>
+    </form>
+
 </div>
 {% endblock %}

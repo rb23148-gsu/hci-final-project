@@ -177,7 +177,6 @@ def create_account():
 
     return render_template('create-account.html', form=form)
 
-
 @app.route('/suggest-username', methods=['POST'])
 def suggest_username():
     email = request.form.get('email', '')
@@ -185,7 +184,6 @@ def suggest_username():
         username = email.split('@')[0]
         return jsonify({'username': username})
     return jsonify({'username': ''})
-
 
 @app.route('/edit-classes', methods=['GET', 'POST'])
 def edit_classes():
@@ -313,7 +311,6 @@ def edit_classes():
         if connection:
             connection.close()
     return render_template('edit-classes.html', form=form, university_id=university_id, classes_data=classes_data, courses_dict=courses_dict)
-
 
 @app.route('/delete-course/<int:enrollment_id>', methods=['POST'])
 def delete_course(enrollment_id):
@@ -532,7 +529,6 @@ def edit_group(group_id):
 
     return render_template('edit-group.html', form=form, group_id=group_id)
 
-
 @app.route('/invite/<string:invite_code>', methods=['GET', 'POST'])
 def invite(invite_code):
     if 'user' not in session:
@@ -678,10 +674,19 @@ def group_page(group_id):
     try:
         # Fetch group details
         query = """
-            SELECT g.group_id, g.group_name, c.subject_name, s.section_code, g.availability, g.creator_id, s.section_id
+            SELECT 
+                g.group_id, 
+                g.group_name, 
+                c.subject_name, 
+                s.section_code, 
+                g.availability AS group_availability, 
+                a.availability AS user_availability, 
+                g.creator_id, 
+                s.section_id
             FROM User_Groups g
             JOIN Sections s ON g.section_id = s.section_id
             JOIN Courses c ON s.course_id = c.course_id
+            LEFT JOIN Availability a ON g.group_id = a.group_id
             WHERE g.group_id = %s
         """
         cursor.execute(query, (group_id,))
@@ -690,6 +695,18 @@ def group_page(group_id):
         if not group_details:
             flash("Group not found or you do not have access to it.")
             return redirect(url_for('dashboard'))
+        
+        group_availability = ast.literal_eval(group_details['group_availability']) if group_details['group_availability'] else {}
+        user_availability = ast.literal_eval(group_details['user_availability']) if group_details['user_availability'] else {}
+
+        # Format availability into readable lists
+        def format_availability(availability):
+            return [
+                f"{day}: {times[1]} - {times[2]}" if times[0] else f"{day}: Not Available"
+                for day, times in availability.items()
+            ]
+
+        formatted_group_availability = format_availability(group_availability)
 
         # Fetch posts and their comments
         query = """
@@ -720,7 +737,7 @@ def group_page(group_id):
         cursor.close()
         connection.close()
 
-    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form, form=form)
+    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form, form=form, formatted_group_availability=formatted_group_availability)
 
 @app.route('/add-post/<int:group_id>', methods=['POST'])
 def add_post(group_id):
@@ -793,7 +810,6 @@ def add_availability(group_id):
             cursor.close()
             connection.close()
     return redirect(request.referrer)
-    
 
 @app.route('/logout', methods=['POST'])
 def logout():
