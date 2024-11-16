@@ -179,6 +179,7 @@ def create_account():
     return render_template('create-account.html', form=form)
 
 @app.route('/suggest-username', methods=['POST'])
+# Split the email before the @ to obtain a recommended username.
 def suggest_username():
     email = request.form.get('email', '')
     if email and '@' in email:
@@ -246,6 +247,7 @@ def edit_classes():
 
             return jsonify(course_data=course_data)
         
+        # Make sure the user has a maximum of 6 enrollments.
         query = ("Select Count(*) from Enrollments where user_id = %s")
         cursor.execute(query, (user_id,))
         num_classes = cursor.fetchone()[0]
@@ -254,6 +256,7 @@ def edit_classes():
             disable_submit = True
             return render_template('edit-classes.html', form=form, classes_data=classes_data, university_id=university_id, disable_submit=disable_submit)
 
+        # Submit the form and get the form input data.
         if form.validate_on_submit():
             subject_code = form.subject_code.data
             course_number = form.course_number.data
@@ -345,7 +348,7 @@ def delete_course(enrollment_id):
         connection.rollback()
         flash("There was an error deleting the course.")
         print(f"Error deleting course: {e}")
-        connection.rollback()
+        
     finally:
         if cursor:
             cursor.close()
@@ -367,6 +370,7 @@ def create_group(section_id):
     try:
         user = session['user']
 
+        # Get the class details for the new group.
         cursor.execute("""
             SELECT c.subject_code, c.subject_name, c.course_number, s.section_code
             FROM Sections s
@@ -375,7 +379,7 @@ def create_group(section_id):
         """, (section_id,))
         class_details = cursor.fetchone()
 
-        # Check if the user is enrolled in the section
+        # Check if the user is enrolled in the section and display an error if they are not.
         cursor.execute("SELECT COUNT(*) FROM Enrollments WHERE user_id = %s AND section_id = %s", (user, section_id))
         enrollment_count = cursor.fetchone()[0]
 
@@ -383,6 +387,7 @@ def create_group(section_id):
             flash("You must be enrolled in this section to create a group.")
             return redirect(url_for('dashboard'))
 
+        # Generate a random invite code
         invite_code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
         cursor.execute("SELECT COUNT(*) FROM User_Groups WHERE invite_code = %s", (invite_code,))
         
@@ -397,6 +402,7 @@ def create_group(section_id):
             flash("You have already created a group for this class section.")
             return redirect(url_for('dashboard'))
         
+        # Get existing groups for the class/section combo and make sure it doesn't already exist.
         cursor.execute("SELECT group_id FROM User_Groups WHERE creator_id = %s AND section_id = %s", (user, section_id))
         existing_group = cursor.fetchone()
 
@@ -404,6 +410,7 @@ def create_group(section_id):
             flash("You already have a group for this section. Redirecting to edit page.")
             return redirect(url_for('edit_group', group_id=existing_group[0]))
         
+        # When submitting the form, get the form data.
         if request.method == 'POST' and form.validate_on_submit():
             group_name = form.group_name.data
             group_description = form.group_description.data
@@ -419,12 +426,14 @@ def create_group(section_id):
                 "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
             }
 
+            # Create the new group.
             cursor.execute("""INSERT INTO User_Groups (group_name, group_description, section_id, availability, preferred_meeting_link, invite_code, creator_id) 
                            VALUES (%s, %s, %s, %s, %s, %s, %s)""", (group_name, group_description, section_id, str(user_availability), meeting_link, invite_code, user))
             connection.commit()
 
             group_id = cursor.lastrowid
 
+            # Register the group membership for the user.
             cursor.execute("INSERT INTO Group_Membership (group_id, user_id, is_group_leader, availability) VALUES (%s, %s, TRUE, %s)", (group_id, user, str(user_availability)))
             connection.commit()
 
@@ -437,7 +446,7 @@ def create_group(section_id):
         connection.rollback()
         flash("There was an error creating the group.")
         print(f"Error creating group: {e}")
-        connection.rollback()
+
     finally:
         if cursor:
             cursor.close()
@@ -457,14 +466,15 @@ def edit_group(group_id):
     try:
         user = session['user']
 
-        # Fetch group details for the given group_id
+        # Fetch group details for the given group_id.
+        # This could all be condensed into a single query.
         cursor.execute("SELECT group_name, group_description, availability FROM User_Groups WHERE group_id = %s", (group_id,))
         group = cursor.fetchone()
 
-        cursor.execute("Select invite_code from User_Groups where group_id = %s", (group_id,))
+        cursor.execute("SELECT invite_code FROM User_Groups WHERE group_id = %s", (group_id,))
         invite_code = cursor.fetchone()[0]
 
-        cursor.execute("Select preferred_meeting_link from User_Groups where group_id = %s", (group_id,))
+        cursor.execute("SELECT preferred_meeting_link FROM User_Groups WHERE group_id = %s", (group_id,))
         meeting_link = cursor.fetchone()[0]
 
         if not group:
@@ -512,6 +522,7 @@ def edit_group(group_id):
                     form.sunday.start_time.data = start_time
                     form.sunday.end_time.data = end_time
 
+        # When submitting the form, get the form data.
         if request.method == 'POST' and form.validate_on_submit():
             new_group_name = form.group_name.data
             new_group_description = form.group_description.data
@@ -528,6 +539,7 @@ def edit_group(group_id):
                 "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
             }
 
+            # Update the tables with the new information.
             cursor.execute("""UPDATE User_Groups SET group_name = %s, group_description = %s, availability = %s, preferred_meeting_link = %s WHERE group_id = %s""", 
             (new_group_name, new_group_description, str(user_availability), new_meeting_link,group_id))
             connection.commit()
@@ -539,6 +551,7 @@ def edit_group(group_id):
         connection.rollback()
         flash("There was an error updating the group.")
         print(f"Error updating group: {e}")
+
     finally:
         if cursor:
             cursor.close()
@@ -549,12 +562,14 @@ def edit_group(group_id):
 
 @app.route('/invite/<string:invite_code>', methods=['GET', 'POST'])
 def invite(invite_code):
+    # Store the invite code in session data if the user is not logged in and redirect to the login form.
     if 'user' not in session:
         session['pending_invite'] = invite_code
         return redirect(url_for('login'))
     
     user = session['user']
 
+    # Get the invite code from session data.
     if 'pending_invite' in session:
         invite_code = session.pop('pending_invite')
 
@@ -562,6 +577,7 @@ def invite(invite_code):
         connection = connect_to_database()
         cursor = connection.cursor()
 
+        # Check the invite code against existing groups to try to find a match.
         if request.method == 'GET':
             cursor.execute("Select Count(*) from User_Groups where invite_code = %s", (invite_code,))
             invite_exists = cursor.fetchall()
@@ -582,7 +598,7 @@ def invite(invite_code):
         connection.rollback()
         flash("There was an error joining the group.")
         print(f"Error joining group: {e}")
-        connection.rollback()
+
     finally:
         if cursor:
             cursor.close()
@@ -675,6 +691,7 @@ def dashboard():
 
 @app.route('/join-request', methods=['POST'])
 def join_request():
+    # This would ideally send a notification or email, but is unimplemented for the prototype.
     return render_template('dashboard.html')
 
 @app.route('/group-page/<int:group_id>', methods=['GET', 'POST'])
@@ -682,10 +699,12 @@ def group_page(group_id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
+    # Get user and form info for the page.
     user_id = session['user']
     post_form = PostForm()
     comment_form = CommentForm()
     form = GroupForm()
+
     connection = connect_to_database()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
@@ -771,6 +790,8 @@ def group_page(group_id):
 @app.route('/add-post/<int:group_id>', methods=['POST'])
 def add_post(group_id):
     post_form = PostForm()
+
+    # When submitting the form, create a new post.
     if post_form.validate_on_submit():
         connection = connect_to_database()
         cursor = connection.cursor()
@@ -779,17 +800,22 @@ def add_post(group_id):
             cursor.execute(query, (group_id, session['user'], post_form.post_title.data, post_form.post_content.data))
             connection.commit()
             flash("Post created successfully!")
+
         except Exception as e:
             flash("An error occurred while creating the post.")
             print(f"Error: {e}")
+
         finally:
             cursor.close()
             connection.close()
+
     return redirect(url_for('group_page', group_id=group_id))
 
 @app.route('/add-comment/<int:post_id>', methods=['POST'])
 def add_comment(post_id):
     comment_form = CommentForm()
+
+    # When submitting the form, create a new comment.
     if comment_form.validate_on_submit():
         connection = connect_to_database()
         cursor = connection.cursor()
@@ -798,12 +824,15 @@ def add_comment(post_id):
             cursor.execute(query, (post_id, session['user'], comment_form.comment_content.data))
             connection.commit()
             flash("Comment added successfully!")
+
         except Exception as e:
             flash("An error occurred while adding the comment.")
             print(f"Error: {e}")
+
         finally:
             cursor.close()
             connection.close()
+
     return redirect(request.referrer)
 
 @app.route('/add-availability/<int:group_id>', methods=['POST'])
