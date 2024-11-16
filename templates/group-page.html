@@ -20,8 +20,25 @@
         </div>
     {% endif %}
 
+    <!-- Group Members -->
+    <h5 class="mt-4">{{ group_details['group_name'] }} Members</h5>
+    <ul>
+        {% for member in group_members %}
+        <li>{{ member.first_name }} {{ member.last_name }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- User Availability -->
+    <h5 class="mt-4">My Availability</h5>
+    <p>My current availability is:</p>
+    <ul>
+        {% for item in formatted_user_availability %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+
     <!-- Group Availability -->
-    <h5 class="mt-4">Group {{ group_details['group_name'] }} Availability</h5>
+    <h5 class="mt-4">{{ group_details['group_name'] }} Availability</h5>
     <p>Based on group input, the best times to meet are:</p>
     <ul>
         {% for item in formatted_group_availability %}
@@ -30,11 +47,11 @@
     </ul>
 
     <!-- Preferred Meeting Spot -->
-    <h5 class="mt-4">Group {{ group_details['group_name'] }} Preferred Meeting Spot</h5>
+    <h5 class="mt-4">{{ group_details['group_name'] }} Preferred Meeting Spot</h5>
     <p><a href="{{ group_details['preferred_meeting_link'] }}" target="_blank" class="text-primary">Zoom Link</a> - Next Meeting: 10/16/2024</p>
 
     <!-- News Feed -->
-    <h5 class="mt-4">Group {{ group_details['group_name'] }} News Feed</h5>
+    <h5 class="mt-4">{{ group_details['group_name'] }} News Feed</h5>
 
     <div class="p-3 rounded">
         {% for post in posts %}

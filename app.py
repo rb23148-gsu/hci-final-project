@@ -725,6 +725,7 @@ def group_page(group_id):
             ]
 
         formatted_group_availability = format_availability(group_availability)
+        formatted_user_availability = format_availability(user_availability)
 
         # Fetch posts and their comments
         query = """
@@ -748,6 +749,15 @@ def group_page(group_id):
             cursor.execute(query, (post['post_id'],))
             post['comments'] = cursor.fetchall()
 
+        query = """
+            SELECT u.first_name, u.last_name
+            FROM Group_Membership gm
+            JOIN Users u ON gm.user_id = u.user_id
+            WHERE gm.group_id = %s
+        """
+        cursor.execute(query, (group_id,))
+        group_members = cursor.fetchall()
+
     except Exception as e:
         flash("An error occurred while fetching posts and comments.")
         print(f"Error: {e}")
@@ -755,7 +765,7 @@ def group_page(group_id):
         cursor.close()
         connection.close()
 
-    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form, form=form, formatted_group_availability=formatted_group_availability)
+    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form, form=form, formatted_group_availability=formatted_group_availability, group_members=group_members, formatted_user_availability=formatted_user_availability)
 
 @app.route('/add-post/<int:group_id>', methods=['POST'])
 def add_post(group_id):
@@ -817,10 +827,23 @@ def add_availability(group_id):
                 "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
             }
 
-            query = "Insert into Availability (group_id, user_id, availability) VALUES (%s, %s, %s)"
-            cursor.execute(query, (group_id, user_id, str(user_availability)))
+            # Check if availability already exists for this user and group
+            query = "SELECT COUNT(*) FROM Availability WHERE group_id = %s AND user_id = %s"
+            cursor.execute(query, (group_id, user_id))
+            availability_exists = cursor.fetchone()[0] > 0
+
+            if availability_exists:
+                # If availability exists, update it
+                query = "UPDATE Availability SET availability = %s WHERE group_id = %s AND user_id = %s"
+                cursor.execute(query, (str(user_availability), group_id, user_id))
+                flash("Availability updated successfully!")
+            else:
+                # If no availability exists, insert it
+                query = "INSERT INTO Availability (group_id, user_id, availability) VALUES (%s, %s, %s)"
+                cursor.execute(query, (group_id, user_id, str(user_availability)))
+                flash("Availability added successfully!")
+
             connection.commit()
-            flash("Availability added successfully!")
         except Exception as e:
             flash("An error occurred while adding the availability.")
             print(f"Error: {e}")
