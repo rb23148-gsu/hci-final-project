@@ -656,7 +656,7 @@ def group_page(group_id):
         cursor.execute(query, (group_id,))
         group_details = cursor.fetchone()
 
-
+        print(group_details['group_id'])
         if not group_details:
             flash("Group not found or you do not have access to it.")
             return redirect(url_for('dashboard'))
@@ -690,7 +690,7 @@ def group_page(group_id):
         cursor.close()
         connection.close()
 
-    return render_template('group-page.html', group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form)
+    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form)
 
 @app.route('/add-post/<int:group_id>', methods=['POST'])
 def add_post(group_id):
