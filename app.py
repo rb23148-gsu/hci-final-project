@@ -450,6 +450,9 @@ def edit_group(group_id):
         cursor.execute("SELECT group_name, group_description, availability FROM User_Groups WHERE group_id = %s", (group_id,))
         group = cursor.fetchone()
 
+        cursor.execute("Select invite_code from User_Groups where group_id = %s", (group_id,))
+        invite_code = cursor.fetchone()[0]
+
         if not group:
             flash("Group not found.")
             return redirect(url_for('dashboard'))
@@ -527,7 +530,7 @@ def edit_group(group_id):
         if connection:
             connection.close()
 
-    return render_template('edit-group.html', form=form, group_id=group_id)
+    return render_template('edit-group.html', form=form, group_id=group_id, invite_code=invite_code)
 
 @app.route('/invite/<string:invite_code>', methods=['GET', 'POST'])
 def invite(invite_code):

@@ -24,7 +24,7 @@
     <!-- Form Section -->
 {% endif %}
     <!-- Group Name -->
-    <form action="{{ url_for('edit_group', group_id=group_id) }}" method="POST">
+    <form action="{{ url_for('edit_group', group_id=group_id, invite_code=invite_code) }}" method="POST">
         {{ form.hidden_tag() }}
         <div class="mb-3">
             {{ form.group_name.label }} {{ form.group_name(class="d-block") }}
