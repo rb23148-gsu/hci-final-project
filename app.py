@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
-from forms import LoginForm, CreateAccountForm, CourseForm, AddClassesForm, ClassEntryForm, CreateGroupForm, PostForm, CommentForm, EditGroupForm
+from forms import LoginForm, CreateAccountForm, CourseForm, AddClassesForm, ClassEntryForm, CreateGroupForm, PostForm, CommentForm, EditGroupForm, GroupForm
 import os, pymysql, random, string, ast
 
 load_dotenv()
@@ -533,7 +533,7 @@ def edit_group(group_id):
     return render_template('edit-group.html', form=form, group_id=group_id)
 
 
-@app.route('/invite/<int:invite_code>', methods=['GET', 'POST'])
+@app.route('/invite/<string:invite_code>', methods=['GET', 'POST'])
 def invite(invite_code):
     if 'user' not in session:
         session['pending_invite'] = invite_code
@@ -548,21 +548,22 @@ def invite(invite_code):
         connection = connect_to_database()
         cursor = connection.cursor()
 
-        cursor.execute("Select Count(*) from User_Groups where invite_code = %s", (invite_code,))
-        invite_exists = cursor.fetchall()
+        if request.method == 'GET':
+            cursor.execute("Select Count(*) from User_Groups where invite_code = %s", (invite_code,))
+            invite_exists = cursor.fetchall()
 
-        if invite_exists[0][0] == 0:
-            flash("Invalid invite code.")
-            return redirect(url_for('dashboard'))
+            if invite_exists[0][0] == 0:
+                flash("Invalid invite code.")
+                return redirect(url_for('dashboard'))
 
-        if invite_exists[0][0] == 1:
-            cursor.execute("Select group_id from User_Groups where invite_code = %s", (invite_code,))
-            group_id = cursor.fetchone()
-            cursor.execute("Insert into Group_Membership (group_id, user_id, is_group_leader) VALUES (%s, %s, FALSE)", (group_id, user))
-            connection.commit()
+            if invite_exists[0][0] == 1:
+                cursor.execute("Select group_id from User_Groups where invite_code = %s", (invite_code,))
+                group_id = cursor.fetchone()[0]
+                cursor.execute("Insert into Group_Membership (group_id, user_id, is_group_leader) VALUES (%s, %s, FALSE)", (group_id, user))
+                connection.commit()
 
-            return redirect(url_for('group_page', group_id=group_id))
-
+                return redirect(url_for('group_page', group_id=group_id))
+        
     except Exception as e:
         connection.rollback()
         flash("There was an error joining the group.")
@@ -574,7 +575,7 @@ def invite(invite_code):
         if connection:
             connection.close()
 
-    return render_template('dashboard.html')
+    return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 def dashboard():
@@ -587,7 +588,7 @@ def dashboard():
     cursor = connection.cursor(pymysql.cursors.DictCursor)
     
     # Get user's joined groups
-    cursor.execute("""
+    cursor.execute(""" 
         SELECT g.group_name, s.section_code, c.subject_name, g.group_id, g.invite_code
         FROM Group_Membership gm
         JOIN User_Groups g ON gm.group_id = g.group_id
@@ -597,8 +598,37 @@ def dashboard():
     """, (user_id,))
     user_groups = cursor.fetchall()
 
+    # Get the most recent activity for each group
+    for group in user_groups:
+        group_id = group['group_id']
+        
+        # Get the most recent post activity
+        cursor.execute("""
+            SELECT MAX(p.created_at) AS last_activity
+            FROM Group_Post p
+            WHERE p.group_id = %s
+        """, (group_id,))
+        post_activity = cursor.fetchone()
+        group['last_activity'] = post_activity['last_activity'] if post_activity['last_activity'] else None
+        
+        # Get the most recent comment activity
+        cursor.execute("""
+            SELECT MAX(c.created_at) AS last_activity
+            FROM Post_Comment c
+            JOIN Group_Post p ON c.post_id = p.post_id
+            WHERE p.group_id = %s
+        """, (group_id,))
+        comment_activity = cursor.fetchone()
+        comment_last_activity = comment_activity['last_activity'] if comment_activity['last_activity'] else None
+
+        # Determine the most recent activity (between post and comment)
+        if group['last_activity'] and comment_last_activity:
+            group['last_activity'] = max(group['last_activity'], comment_last_activity)
+        elif not group['last_activity']:
+            group['last_activity'] = comment_last_activity
+
     # Get user's available groups based on enrollments.
-    cursor.execute("""
+    cursor.execute(""" 
         SELECT g.group_name, g.group_id, c.subject_name, s.section_code, e.section_id
         FROM Enrollments e
         JOIN Sections s ON e.section_id = s.section_id
@@ -612,7 +642,7 @@ def dashboard():
     available_groups = cursor.fetchall()
 
     # Get the user's enrollments, marking those with existing groups
-    cursor.execute("""
+    cursor.execute(""" 
     SELECT c.subject_name, s.section_code, e.section_id,
            EXISTS (
                SELECT 1 
@@ -641,6 +671,7 @@ def group_page(group_id):
     user_id = session['user']
     post_form = PostForm()
     comment_form = CommentForm()
+    form = GroupForm()
     connection = connect_to_database()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
@@ -656,7 +687,6 @@ def group_page(group_id):
         cursor.execute(query, (group_id,))
         group_details = cursor.fetchone()
 
-        print(group_details['group_id'])
         if not group_details:
             flash("Group not found or you do not have access to it.")
             return redirect(url_for('dashboard'))
@@ -690,7 +720,7 @@ def group_page(group_id):
         cursor.close()
         connection.close()
 
-    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form)
+    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form, form=form)
 
 @app.route('/add-post/<int:group_id>', methods=['POST'])
 def add_post(group_id):
@@ -730,6 +760,40 @@ def add_comment(post_id):
             connection.close()
     return redirect(request.referrer)
 
+@app.route('/add-availability/<int:group_id>', methods=['POST'])
+def add_availability(group_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user']
+    form = GroupForm()
+
+    if form.validate_on_submit():
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        try:
+            user_availability = {
+                "Monday": (form.monday.selected.data, form.monday.start_time.data, form.monday.end_time.data),
+                "Tuesday": (form.tuesday.selected.data, form.tuesday.start_time.data, form.tuesday.end_time.data),
+                "Wednesday": (form.wednesday.selected.data, form.wednesday.start_time.data, form.wednesday.end_time.data),
+                "Thursday": (form.thursday.selected.data, form.thursday.start_time.data, form.thursday.end_time.data),
+                "Friday": (form.friday.selected.data, form.friday.start_time.data, form.friday.end_time.data),
+                "Saturday": (form.saturday.selected.data, form.saturday.start_time.data, form.saturday.end_time.data),
+                "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
+            }
+
+            query = "Insert into Availability (group_id, user_id, availability) VALUES (%s, %s, %s)"
+            cursor.execute(query, (group_id, user_id, str(user_availability)))
+            connection.commit()
+            flash("Availability added successfully!")
+        except Exception as e:
+            flash("An error occurred while adding the availability.")
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
+            connection.close()
+    return redirect(request.referrer)
+    
 
 @app.route('/logout', methods=['POST'])
 def logout():

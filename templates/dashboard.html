@@ -12,9 +12,11 @@
                     <ul>
                         {% for group in user_groups %}
                             <li id="my-groups-info">
-                                <a href="{{ url_for('group_page', group_id=group.group_id) }}" class="d-block"><h3>{{ group.group_name }}</h3></a>
+                                <a href="{{ url_for('group_page', group_id=group.group_id) }}" class="d-block">
+                                    <h3>{{ group.group_name }}</h3>
+                                </a>
                                 {{ group.subject_name }} - Section {{ group.section_code }}
-                                <p>Last Activity: 05/28/1453</p>
+                                <p>Last Activity: {{ group.last_activity if group.last_activity else 'No activity yet' }}</p>
                                 <p>Next meeting on 05/29/1453</p>
                                 <a href="#">Zoom Link</a><br>
                             </li>

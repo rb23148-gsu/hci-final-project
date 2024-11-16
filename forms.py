@@ -82,6 +82,16 @@ class EditGroupForm(FlaskForm):
     sunday = FormField(AvailabilityDayForm)
     edit_group = SubmitField('Edit Group')
 
+class GroupForm(FlaskForm):
+    monday = FormField(AvailabilityDayForm)
+    tuesday = FormField(AvailabilityDayForm)
+    wednesday = FormField(AvailabilityDayForm)
+    thursday = FormField(AvailabilityDayForm)
+    friday = FormField(AvailabilityDayForm)
+    saturday = FormField(AvailabilityDayForm)
+    sunday = FormField(AvailabilityDayForm)
+    update_availability = SubmitField('Update Availability')
+
 class PostForm(FlaskForm):
     post_title = StringField('Post Title', validators=[DataRequired()])
     post_content = TextAreaField('Post Content', validators=[DataRequired()])
