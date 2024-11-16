@@ -9,8 +9,10 @@
     {% if class_details %}
         <p class="text-center mt-3">
             <strong>You are creating a group for:</strong> <br>
-            {{ class_details[2] }} Section {{ class_details[3] }}
+            {{ class_details[0] }} {{ class_details[1] }} Section {{ class_details[2] }}
         </p>
+    {% else %}
+        <p class="text-center mt-3">Class details not found.</p>
     {% endif %}
     
     {% if group_created %}
@@ -34,10 +36,10 @@
     <form class="" action="{{ url_for('create_group', section_id=section_id, invite_code=invite_code) }}" method="POST">
         {{ form.hidden_tag() }}
         <div class="mb-3">
-            {{ form.group_name.label }} {{ form.group_name(class="d-block") }}
+            {{ form.group_name.label }} {{ form.group_name(id="group_name", class="form-control", placeholder="Enter group name") }}
         </div>
         <div class="mb-3">
-            {{ form.group_description.label }} {{ form.group_description(class="d-block") }}
+            {{ form.group_description.label }} {{ form.group_description(id="group_description", class="form-control", placeholder="Enter group description") }}
         </div>
     
         <h5>Your Availability</h5>
@@ -76,10 +78,9 @@
         <div class="mt-4">
             {{ form.meeting_link.label }}
             <div class="input-group mb-2">
-                <input type="text" id="meeting_link" name="meeting_link" class="form-control text-center">
-                {{ form.meeting_link }}
+                {{ form.meeting_link(class="form-control text-center", id="meeting_link") }}
             </div>
-            <p class="text-center mb-1" style="font-size: 0.9em; color: #555;">Share this invite link with others to invite them to your meeting:</p>
+            <p class="text-center mb-1" style="font-size: 0.9em; color: #555;">Share this invite link with others to invite them to your meeting</p>
         </div>
 
         <!-- Submit Button -->

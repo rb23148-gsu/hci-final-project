@@ -365,6 +365,15 @@ def create_group(section_id):
 
     try:
         user = session['user']
+
+        cursor.execute("""
+            SELECT c.subject_code, c.subject_name, c.course_number, s.section_code
+            FROM Sections s
+            JOIN Courses c ON s.course_id = c.course_id
+            WHERE s.section_id = %s
+        """, (section_id,))
+        class_details = cursor.fetchone()
+
         # Check if the user is enrolled in the section
         cursor.execute("SELECT COUNT(*) FROM Enrollments WHERE user_id = %s AND section_id = %s", (user, section_id))
         enrollment_count = cursor.fetchone()[0]
@@ -393,7 +402,7 @@ def create_group(section_id):
         if existing_group:
             flash("You already have a group for this section. Redirecting to edit page.")
             return redirect(url_for('edit_group', group_id=existing_group[0]))
-
+        
         if request.method == 'POST' and form.validate_on_submit():
             group_name = form.group_name.data
             group_description = form.group_description.data
@@ -421,7 +430,7 @@ def create_group(section_id):
             print("Group successfully created!")
             flash("Group successfully created!")
 
-            return render_template('create-group.html', form=form, invite_code=invite_code, section_id=section_id)
+            return render_template('create-group.html', form=form, invite_code=invite_code, section_id=section_id, class_details=class_details)
         
     except Exception as e:
         connection.rollback()
@@ -433,7 +442,7 @@ def create_group(section_id):
             cursor.close()
         if connection:
             connection.close()
-    return render_template('create-group.html', form=form, section_id=section_id, invite_code=invite_code)
+    return render_template('create-group.html', form=form, section_id=section_id, invite_code=invite_code, class_details=class_details)
 
 @app.route('/edit-group/<int:group_id>', methods=['GET', 'POST'])
 def edit_group(group_id):
