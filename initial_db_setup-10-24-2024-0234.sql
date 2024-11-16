@@ -114,5 +114,7 @@ CREATE TABLE Post_Comment (
     FOREIGN KEY (post_id) REFERENCES Group_Post(post_id),
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
+ALTER TABLE Group_Post
+ADD COLUMN post_title VARCHAR(255);
 
 SHOW tables;
