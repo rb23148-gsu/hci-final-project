@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
+from datetime import datetime
 from forms import LoginForm, CreateAccountForm, CourseForm, AddClassesForm, ClassEntryForm, CreateGroupForm, PostForm, CommentForm, EditGroupForm, GroupForm
 import os, pymysql, random, string, ast
 
@@ -851,6 +852,30 @@ def add_availability(group_id):
             cursor.close()
             connection.close()
     return redirect(request.referrer)
+
+# Main function to calculate best meeting time for the group
+def get_best_meeting_time(group_availabilities):
+    best_times = {}
+
+    # Looping over each day of the week
+    for day in group_availabilities:
+        user_times = []
+        
+        # Collecting the availability  for a day from all users
+        for availability in group_availabilities[day]:
+            if availability[0]:  # If the user is available
+                start_time = convert_time_to_datetime(availability[1])
+                end_time = convert_time_to_datetime(availability[2])
+                user_times.append((start_time, end_time))
+        
+        # If there are available times, find the overlap
+        if user_times:
+            overlaps = find_overlap(user_times)
+            if overlaps:
+                best_times[day] = overlaps
+
+    # Return the best available times
+    return best_times
 
 @app.route('/logout', methods=['POST'])
 def logout():
