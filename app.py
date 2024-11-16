@@ -397,6 +397,7 @@ def create_group(section_id):
         if request.method == 'POST' and form.validate_on_submit():
             group_name = form.group_name.data
             group_description = form.group_description.data
+            meeting_link = form.meeting_link.data
             
             user_availability = {
                 "Monday": (form.monday.selected.data, form.monday.start_time.data, form.monday.end_time.data),
@@ -409,7 +410,7 @@ def create_group(section_id):
             }
 
             cursor.execute("""INSERT INTO User_Groups (group_name, group_description, section_id, availability, preferred_meeting_link, invite_code, creator_id) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s)""", (group_name, group_description, section_id, str(user_availability), "Not Set", invite_code, user))
+                           VALUES (%s, %s, %s, %s, %s, %s, %s)""", (group_name, group_description, section_id, str(user_availability), meeting_link, invite_code, user))
             connection.commit()
 
             group_id = cursor.lastrowid
@@ -452,6 +453,9 @@ def edit_group(group_id):
 
         cursor.execute("Select invite_code from User_Groups where group_id = %s", (group_id,))
         invite_code = cursor.fetchone()[0]
+
+        cursor.execute("Select preferred_meeting_link from User_Groups where group_id = %s", (group_id,))
+        meeting_link = cursor.fetchone()[0]
 
         if not group:
             flash("Group not found.")
@@ -501,6 +505,7 @@ def edit_group(group_id):
         if request.method == 'POST' and form.validate_on_submit():
             new_group_name = form.group_name.data
             new_group_description = form.group_description.data
+            new_meeting_link = form.meeting_link.data
 
             # Update availability from the form data
             user_availability = {
@@ -513,8 +518,8 @@ def edit_group(group_id):
                 "Sunday": (form.sunday.selected.data, form.sunday.start_time.data, form.sunday.end_time.data),
             }
 
-            cursor.execute("""UPDATE User_Groups SET group_name = %s, group_description = %s, availability = %s WHERE group_id = %s""", 
-            (new_group_name, new_group_description, str(user_availability), group_id))
+            cursor.execute("""UPDATE User_Groups SET group_name = %s, group_description = %s, availability = %s, preferred_meeting_link = %s WHERE group_id = %s""", 
+            (new_group_name, new_group_description, str(user_availability), new_meeting_link,group_id))
             connection.commit()
 
             flash("Group details updated successfully!")
@@ -530,7 +535,7 @@ def edit_group(group_id):
         if connection:
             connection.close()
 
-    return render_template('edit-group.html', form=form, group_id=group_id, invite_code=invite_code)
+    return render_template('edit-group.html', form=form, meeting_link=meeting_link, group_id=group_id, invite_code=invite_code)
 
 @app.route('/invite/<string:invite_code>', methods=['GET', 'POST'])
 def invite(invite_code):
@@ -588,7 +593,7 @@ def dashboard():
     
     # Get user's joined groups
     cursor.execute(""" 
-        SELECT g.group_name, s.section_code, c.subject_name, g.group_id, g.invite_code
+        SELECT g.group_name, s.section_code, c.subject_name, g.group_id, g.invite_code, g.preferred_meeting_link
         FROM Group_Membership gm
         JOIN User_Groups g ON gm.group_id = g.group_id
         JOIN Sections s ON g.section_id = s.section_id
@@ -685,6 +690,7 @@ def group_page(group_id):
                 g.availability AS group_availability, 
                 a.availability AS user_availability, 
                 g.creator_id, 
+                g.preferred_meeting_link,
                 s.section_id
             FROM User_Groups g
             JOIN Sections s ON g.section_id = s.section_id

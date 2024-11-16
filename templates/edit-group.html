@@ -65,6 +65,17 @@
             </p>
         </div>
 
+        <!-- Meeting Link -->
+        <div class="mt-4">
+            {{ form.meeting_link.label }}
+            <div class="input-group mb-2">
+                <input type="text" id="meeting_link" name="meeting_link" class="form-control text-center" value="{{ meeting_link }}">
+            </div>
+            <p class="text-center mb-1" style="font-size: 0.9em; color: #555;">Share this invite link with others to invite them to your meeting:</p>
+            <p class="text-center">
+                <a href="" class="btn btn-link" target="_blank"></a>
+            </p>
+        </div>
         <!-- Submit Button -->
         <div class="mt-3 text-center">
             {{ form.edit_group(class="btn btn-primary btn-success") }}

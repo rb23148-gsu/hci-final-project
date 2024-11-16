@@ -61,6 +61,7 @@ class AvailabilityDayForm(FlaskForm):
 class CreateGroupForm(FlaskForm):
     group_name = StringField('Group Name', validators=[DataRequired()])
     group_description = TextAreaField('Group Description', validators=[DataRequired()])
+    meeting_link = StringField('Share this Zoom link to your partners:', validators=[DataRequired()])
     monday = FormField(AvailabilityDayForm)
     tuesday = FormField(AvailabilityDayForm)
     wednesday = FormField(AvailabilityDayForm)
@@ -73,6 +74,7 @@ class CreateGroupForm(FlaskForm):
 class EditGroupForm(FlaskForm):
     group_name = StringField('Group Name', validators=[DataRequired()])
     group_description = TextAreaField('Group Description', validators=[DataRequired()])
+    meeting_link = StringField('Share this Zoom link to your partners:', validators=[DataRequired()])
     monday = FormField(AvailabilityDayForm)
     tuesday = FormField(AvailabilityDayForm)
     wednesday = FormField(AvailabilityDayForm)

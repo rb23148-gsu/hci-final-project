@@ -18,7 +18,7 @@
                                 {{ group.subject_name }} - Section {{ group.section_code }}
                                 <p>Last Activity: {{ group.last_activity if group.last_activity else 'No activity yet' }}</p>
                                 <p>Next meeting on 05/29/1453</p>
-                                <a href="#">Zoom Link</a><br>
+                                <a href="{{ group.preferred_meeting_link }}" target="_blank">Zoom Link</a><br>
                             </li>
                         {% endfor %}
                     </ul>
@@ -42,10 +42,22 @@
                                     <h4>{{ group.subject_name }} - Section {{ group.section_code }}</h4>
                                     <input type="radio" id="group-{{ group.group_id }}" name="group" value="{{ group.group_id }}">
                                     <label for="group-{{ group.group_id }}">{{ group.group_name }}</label><br>
+                                    <button type="button" class="btn btn-primary" id="liveToastBtn">Request to Join</button>
+                                        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                                            <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                                                <div class="toast-header">
+                                                <img src="..." class="rounded me-2" alt="...">
+                                                <strong class="me-auto">Email Sent</strong>
+                                                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                </div>
+                                                <div class="toast-body">
+                                                Email sent to Group Creator!
+                                                </div>
+                                            </div>
+                                        </div>
                                 </form>
                             </li>                         
                         {% endfor %}
-                        <input class="btn btn-primary btn-success mt-3" type="submit" value="Request to Join Group">
                     </ul>
                 {% else %}
                     <p>No other groups exist for your classes.</p>
