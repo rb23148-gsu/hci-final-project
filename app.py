@@ -762,7 +762,7 @@ def group_page(group_id):
 
     connection = connect_to_database()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
-
+    best_times = {}
     try:
         # Fetch group details
         query = """
