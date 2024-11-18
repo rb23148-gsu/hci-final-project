@@ -19,20 +19,7 @@
             <a href="{{ url_for('edit_group', group_id=group_details['group_id']) }}" class="btn btn-warning btn-lg">Edit Group Details</a>
         </div>
     {% endif %}
-        <!-- Best Meeting Times -->
-{% if best_times %}
-    <h3>Best Meeting Times</h3>
-    {% for day, times in best_times.items() %}
-        <p>{{ day }}: 
-        {% for start, end in times %}
-            {{ start.strftime('%H:%M') }} - {{ end.strftime('%H:%M') }}
-        {% endfor %}
-        </p>
-    {% endfor %}
-{% else %}
-    <p>No overlapping times found for the group.</p>
-{% endif %}
-    
+
     <!-- Group Members -->
     <h5 class="mt-4">{{ group_details['group_name'] }} Members</h5>
     <ul>
