@@ -24,10 +24,9 @@
                                 <p class="nav-link-text">Edit Classes</p>
                             </a>
                             <!-- Change to a button/form to use POST requests to logout, since using GET is suboptimal. -->
-                            <form class="d-flex align-items-center" action="{{ url_for('logout') }}" method="post"
-                                style="display:inline;">
+                            <form class="d-flex align-items-center" action="{{ url_for('logout') }}" method="post">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                                <button type="submit" class="btn btn-danger nav-item nav-link rounded-3"
+                                <button type="submit" class="btn btn-danger nav-item nav-link rounded-3 d-flex w-100 justify-content-start"
                                     id="logout-button">Logout</button>
                             </form>
                             {% else %}

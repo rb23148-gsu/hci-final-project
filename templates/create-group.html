@@ -9,7 +9,7 @@
     {% if class_details %}
         <p class="text-center mt-3">
             <strong>You are creating a group for:</strong> <br>
-            {{ class_details[0] }} {{ class_details[1] }} Section {{ class_details[2] }}
+            {{ class_details[0] }} {{ class_details[1] }} Section {{ class_details[3] }}
         </p>
     {% else %}
         <p class="text-center mt-3">Class details not found.</p>
@@ -41,8 +41,17 @@
         <div class="mb-3">
             {{ form.group_description.label }} {{ form.group_description(id="group_description", class="form-control", placeholder="Enter group description") }}
         </div>
+
+        <!-- Meeting Link -->
+        <div class="mt-3">
+            {{ form.meeting_link.label }}
+            <div class="input-group mb-2">
+                {{ form.meeting_link(class="form-control text-center", id="meeting_link") }}
+            </div>
+            <p class="text-center mb-1" style="font-size: 0.9em;">Set your preferred meeting link. This can be changed later.</p>
+        </div>
     
-        <h5>Your Availability</h5>
+        <h5 class="mt-4">Your Availability For This Group</h5>
         <p class="mb-2" style="font-size: 0.9em;">Input your availability for meetings. Other users will add theirs later.</p>
         <div class="row">
             {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
@@ -68,19 +77,10 @@
             <div class="input-group mb-2">
                 <input type="text" id="invite_code" name="invite_code" class="form-control text-center" value="{{ invite_code }}" readonly>
             </div>
-            <p class="text-center mb-1" style="font-size: 0.9em; color: #555;">Share this invite link with others to join your group:</p>
+            <p class="text-center mb-1" style="font-size: 0.9em;">Share this invite link with others to join your group:</p>
             <p class="text-center">
                 <a href="" class="btn btn-link" target="_blank">http://www.grouploop.com/invite/{{ invite_code }}</a>
             </p>
-        </div>
-
-        <!-- Meeting Link -->
-        <div class="mt-4">
-            {{ form.meeting_link.label }}
-            <div class="input-group mb-2">
-                {{ form.meeting_link(class="form-control text-center", id="meeting_link") }}
-            </div>
-            <p class="text-center mb-1" style="font-size: 0.9em; color: #555;">Share this invite link with others to invite them to your meeting</p>
         </div>
 
         <!-- Submit Button -->

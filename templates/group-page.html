@@ -56,12 +56,13 @@
     <div class="p-3 rounded">
         {% for post in posts %}
         <div class="mb-4">
-            <p><strong>{{ post.created_at.strftime('%m/%d/%Y') }}</strong> - Posted by {{ post.username }}</p>
-            <h6>{{ post.post_title }}</h6>
-            <ul>
-                <li>{{ post.post_content }}</li>
+            
+            <h6 class="d-inline">{{ post.post_title }} - </h6><p class="d-inline">{{ post.created_at.strftime('%m/%d/%Y') }} - Posted by {{ post.username }}</p>
+            
+            <ul class="mt-2">
+                <li id="post-content">{{ post.post_content }}</li>
                 {% for comment in post.comments %}
-                <li>
+                <li class="mt-2">
                     {{ comment.comment_content }} - {{ comment.username }} ({{ comment.created_at.strftime('%m/%d/%Y %H:%M') }})
                 </li>
                 {% endfor %}
@@ -88,7 +89,7 @@
     </div>
 
     <!-- Availability Section -->
-    <h5 class="mt-4">Input availability for meetings</h5>
+    <h5 class="mt-5">Input availability for meetings</h5>
     <form action= "{{ url_for('add_availability', group_id=group_details['group_id']) }}" method="POST">
         {{ form.hidden_tag() }}
         <div class="row">
