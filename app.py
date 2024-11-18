@@ -26,60 +26,6 @@ def connect_to_database():
     return pymysql.connect(host=SQL_HOST, user=SQL_USER, password=SQL_PASSWORD, database=SQL_DB)
 
 
-
-    # Helper function to convert time string to datetime object
-def convert_time_to_datetime(time_str):
-    return datetime.strptime(time_str, "%H:%M")
-
-
-# Helper function to find overlapping times 
-def find_overlap(time_intervals):
-    # Sorting intervals by start time
-    time_intervals.sort(key=lambda x: x[0])
-    
-    overlapping_times = []
-    start, end = time_intervals[0]  # Initializing with the first time interval
-
-    for i in range(1, len(time_intervals)):
-        current_start, current_end = time_intervals[i]
-        
-        # If intervals overlap
-        if current_start <= end:
-            # Update the end of the overlap
-            end = max(end, current_end)
-        else:
-            # If it doesn't overlap, store the previous one and reset
-            overlapping_times.append((start, end))
-            start, end = current_start, current_end
-
-    # Add the final overlap
-    overlapping_times.append((start, end))
-
-    return overlapping_times
-    
-# Main function to calculate best meeting time for the group
-def get_best_meeting_time(group_availabilities):
-    best_times = {}
-
-    # Looping over each day of the week
-    for day in group_availabilities:
-        user_times = []
-        
-        # Collecting the availability  for a day from all users
-        for availability in group_availabilities[day]:
-            if availability[0]:  # If the user is available
-                start_time = convert_time_to_datetime(availability[1])
-                end_time = convert_time_to_datetime(availability[2])
-                user_times.append((start_time, end_time))
-        
-        # If there are available times, find the overlap
-        if user_times:
-            overlaps = find_overlap(user_times)
-            if overlaps:
-                best_times[day] = overlaps
-
-    # Return the best available times
-    return best_times
 ### BEGIN ROUTE DEFINITIONS ###
 # Set up default route when visiting the site including the login form
 @app.route('/')
@@ -753,7 +699,6 @@ def group_page(group_id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
-
     # Get user and form info for the page.
     user_id = session['user']
     post_form = PostForm()
@@ -788,23 +733,9 @@ def group_page(group_id):
         if not group_details:
             flash("Group not found or you do not have access to it.")
             return redirect(url_for('dashboard'))
-
-         # Retrieve group and user availability from the database
+        
         group_availability = ast.literal_eval(group_details['group_availability']) if group_details['group_availability'] else {}
         user_availability = ast.literal_eval(group_details['user_availability']) if group_details['user_availability'] else {}
-
-        # Format availability into readable lists
-        def format_availability(availability):
-            return [
-                f"{day}: {times[1]} - {times[2]}" if times[0] else f"{day}: Not Available"
-                for day, times in availability.items()
-            ]
-
-        formatted_group_availability = format_availability(group_availability)
-        formatted_user_availability = format_availability(user_availability)
-        
-        
-
 
         # Format availability into readable lists
         def format_availability(availability):
@@ -837,7 +768,7 @@ def group_page(group_id):
             """
             cursor.execute(query, (post['post_id'],))
             post['comments'] = cursor.fetchall()
-            
+
         query = """
             SELECT u.first_name, u.last_name
             FROM Group_Membership gm
@@ -846,15 +777,7 @@ def group_page(group_id):
         """
         cursor.execute(query, (group_id,))
         group_members = cursor.fetchall()
-         # Gather availability data for all members
-        all_members_availability = {}
-        for member in group_members:
-            member_availability = ast.literal_eval(member['availability']) if member['availability'] else {}
-            all_members_availability[member['first_name'] + " " + member['last_name']] = member_availability
 
-        # Calculate best meeting times for the group
-        best_times = get_best_meeting_time(all_members_availability)
-    
     except Exception as e:
         flash("An error occurred while fetching posts and comments.")
         print(f"Error: {e}")
@@ -862,7 +785,7 @@ def group_page(group_id):
         cursor.close()
         connection.close()
 
-    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form, form=form, formatted_group_availability=formatted_group_availability, group_members=group_members, formatted_user_availability=formatted_user_availability, best_times = best_times)
+    return render_template('group-page.html', user_id=user_id, group_details=group_details, posts=posts, post_form=post_form, comment_form=comment_form, form=form, formatted_group_availability=formatted_group_availability, group_members=group_members, formatted_user_availability=formatted_user_availability)
 
 @app.route('/add-post/<int:group_id>', methods=['POST'])
 def add_post(group_id):
@@ -959,7 +882,59 @@ def add_availability(group_id):
             connection.close()
     return redirect(request.referrer)
 
+# Helper function to convert time string to datetime object
+def convert_time_to_datetime(time_str):
+    return datetime.strptime(time_str, "%H:%M")
 
+
+# Helper function to find overlapping times 
+def find_overlap(time_intervals):
+    # Sorting intervals by start time
+    time_intervals.sort(key=lambda x: x[0])
+    
+    overlapping_times = []
+    start, end = time_intervals[0]  # Initializing with the first time interval
+
+    for i in range(1, len(time_intervals)):
+        current_start, current_end = time_intervals[i]
+        
+        # If intervals overlap
+        if current_start <= end:
+            # Update the end of the overlap
+            end = max(end, current_end)
+        else:
+            # If it doesn't overlap, store the previous one and reset
+            overlapping_times.append((start, end))
+            start, end = current_start, current_end
+
+    # Add the final overlap
+    overlapping_times.append((start, end))
+
+    return overlapping_times
+    
+# Main function to calculate best meeting time for the group
+def get_best_meeting_time(group_availabilities):
+    best_times = {}
+
+    # Looping over each day of the week
+    for day in group_availabilities:
+        user_times = []
+        
+        # Collecting the availability  for a day from all users
+        for availability in group_availabilities[day]:
+            if availability[0]:  # If the user is available
+                start_time = convert_time_to_datetime(availability[1])
+                end_time = convert_time_to_datetime(availability[2])
+                user_times.append((start_time, end_time))
+        
+        # If there are available times, find the overlap
+        if user_times:
+            overlaps = find_overlap(user_times)
+            if overlaps:
+                best_times[day] = overlaps
+
+    # Return the best available times
+    return best_times
 
 @app.route('/logout', methods=['POST'])
 def logout():
