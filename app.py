@@ -619,7 +619,7 @@ def dashboard():
     
     # Get user's joined groups
     cursor.execute(""" 
-        SELECT g.group_name, s.section_code, c.subject_name, g.group_id, g.invite_code, g.preferred_meeting_link
+        SELECT g.group_name, s.section_code, c.subject_name, g.group_id, g.invite_code, g.preferred_meeting_link, g.group_description
         FROM Group_Membership gm
         JOIN User_Groups g ON gm.group_id = g.group_id
         JOIN Sections s ON g.section_id = s.section_id
