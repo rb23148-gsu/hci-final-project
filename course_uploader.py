@@ -1,6 +1,6 @@
 import pymysql
 
-connection = pymysql.connect(host="68.52.195.235", user="HCI", password="GroupLoop", database="grouploop_db")
+connection = 
 
 def parse_course_line(line):
     parts = line.split(" - ")
